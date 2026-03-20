@@ -85,6 +85,20 @@ const ProductForm = (props) => {
         })();
     }, [dispatch])
 
+    useEffect(() => {
+        if (item || !categories?.length) {
+            return;
+        }
+
+        if (!pickerValue || !category) {
+            const firstCategoryId = categories[0]?.id;
+            if (firstCategoryId) {
+                setPickerValue(firstCategoryId);
+                setCategory(firstCategoryId);
+            }
+        }
+    }, [categories, item, pickerValue, category]);
+
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images',],
@@ -102,13 +116,15 @@ const ProductForm = (props) => {
 
 
     const addProduct = () => {
+        setError(null);
+
         if (
-            name === "" ||
-            brand === "" ||
-            price === "" ||
-            description === "" ||
-            category === "" ||
-            countInStock === ""
+            !name?.trim() ||
+            !brand?.trim() ||
+            `${price}`.trim() === "" ||
+            !description?.trim() ||
+            !category ||
+            `${countInStock}`.trim() === ""
         ) {
             setError("Please fill in the form correctly")
             return;
@@ -282,7 +298,13 @@ const ProductForm = (props) => {
                     minWidth="100%"
                     placeholder="Select your Category"
                     selectedValue={pickerValue}
-                    onValueChange={(e) => [setPickerValue(e), setCategory(e)]} >
+                    onValueChange={(e) => {
+                        setPickerValue(e);
+                        setCategory(e || '');
+                        if (error) {
+                            setError(null);
+                        }
+                    }} >
                     {categories.map((c, index) => {
                         return (
                             <Picker.Item

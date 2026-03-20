@@ -2,9 +2,12 @@ import { Platform } from 'react-native'
 
 const envURL = process.env.EXPO_PUBLIC_API_URL;
 
+const webProtocol = typeof window !== 'undefined' ? window?.location?.protocol : null;
+const webHostname = typeof window !== 'undefined' ? window?.location?.hostname : null;
+
 const webDefaultURL =
-    typeof window !== 'undefined'
-        ? `${window.location.protocol}//${window.location.hostname}:4000/api/v1/`
+    webProtocol && webHostname
+        ? `${webProtocol}//${webHostname}:4000/api/v1/`
         : 'http://localhost:4000/api/v1/';
 
 const defaultURL =
