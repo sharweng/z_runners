@@ -2,7 +2,7 @@ import React, { useState, useCallback } from "react";
 import {
     View,
     Text,
-    FlatList,
+    TouchableOpacity,
     ActivityIndicator,
     StyleSheet,
     Dimensions,
@@ -14,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native"
 import { Searchbar } from 'react-native-paper';
+import { SwipeListView } from 'react-native-swipe-list-view';
 import ListItem from "./ListItem"
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -73,6 +74,23 @@ const Products = (props) => {
         dispatch(fetchProducts())
             .finally(() => setRefreshing(false));
     }, [dispatch]);
+
+    const renderHiddenItem = ({ item }) => (
+        <View style={styles.hiddenRow}>
+            <TouchableOpacity
+                style={[styles.hiddenButton, styles.editButton]}
+                onPress={() => navigation.navigate("ProductForm", { item })}
+            >
+                <Text style={styles.hiddenButtonText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={[styles.hiddenButton, styles.deleteButton]}
+                onPress={() => handleDeleteProduct(item.id)}
+            >
+                <Text style={styles.hiddenButtonText}>Delete</Text>
+            </TouchableOpacity>
+        </View>
+    );
 
     useFocusEffect(
         useCallback(
@@ -135,7 +153,7 @@ const Products = (props) => {
                 <View style={styles.spinner}>
                     <ActivityIndicator size="large" color="red" />
                 </View>
-            ) : (<FlatList
+            ) : (<SwipeListView
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                 }
@@ -145,10 +163,12 @@ const Products = (props) => {
                     <ListItem
                         item={item}
                         index={index}
-                        deleteProduct={handleDeleteProduct}
-
                     />
                 )}
+                renderHiddenItem={renderHiddenItem}
+                leftOpenValue={0}
+                rightOpenValue={-160}
+                disableLeftSwipe={false}
                 keyExtractor={(item) => item.id}
             />)}
 
@@ -190,6 +210,30 @@ const styles = StyleSheet.create({
     searchbar: {
         marginHorizontal: spacing.lg,
         marginBottom: spacing.md,
+    },
+    hiddenRow: {
+        alignItems: 'center',
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginHorizontal: spacing.md,
+        marginBottom: 1,
+    },
+    hiddenButton: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 80,
+        height: '100%',
+    },
+    editButton: {
+        backgroundColor: colors.primary,
+    },
+    deleteButton: {
+        backgroundColor: colors.danger,
+    },
+    hiddenButtonText: {
+        color: 'white',
+        fontWeight: '700',
     }
 })
 

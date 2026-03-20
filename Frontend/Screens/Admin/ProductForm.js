@@ -51,6 +51,12 @@ const ProductForm = (props) => {
     const dispatch = useDispatch();
     const { items: categories } = useSelector((state) => state.categories);
 
+    const getEntityId = (value) => {
+        if (!value) return '';
+        if (typeof value === 'string') return value;
+        return value.id || value._id || '';
+    };
+
     useEffect(() => {
         if (!props.route.params) {
             setItem(null);
@@ -62,8 +68,9 @@ const ProductForm = (props) => {
             setDescription(props.route.params.item.description);
             setMainImage(props.route.params.item.image);
             setImage(props.route.params.item.image);
-            setCategory(props.route.params.item.category._id);
-            setPickerValue(props.route.params.item.category._id);
+            const selectedCategoryId = getEntityId(props.route.params.item.category);
+            setCategory(selectedCategoryId);
+            setPickerValue(selectedCategoryId);
             setCountInStock(props.route.params.item.countInStock.toString());
         }
         AsyncStorage.getItem("jwt")
@@ -91,7 +98,7 @@ const ProductForm = (props) => {
         }
 
         if (!pickerValue || !category) {
-            const firstCategoryId = categories[0]?.id;
+            const firstCategoryId = getEntityId(categories[0]);
             if (firstCategoryId) {
                 setPickerValue(firstCategoryId);
                 setCategory(firstCategoryId);
@@ -147,7 +154,7 @@ const ProductForm = (props) => {
         }
 
         let formData = new FormData();
-        const newImageUri = image?.startsWith("file://") ? image : `file:///${image.split("file:/").join("")}`;
+        const hasLocalImage = typeof image === "string" && image.startsWith("file://");
 
         formData.append("name", name);
         formData.append("brand", brand);
@@ -159,16 +166,16 @@ const ProductForm = (props) => {
         formData.append("rating", rating);
         formData.append("numReviews", numReviews);
         formData.append("isFeatured", isFeatured);
-        if (image) {
+        if (hasLocalImage) {
             formData.append("image", {
-                uri: newImageUri,
-                type: mime.getType(newImageUri),
-                name: newImageUri.split("/").pop()
+                uri: image,
+                type: mime.getType(image),
+                name: image.split("/").pop()
             });
         }
 
         if (item !== null) {
-            dispatch(updateProduct(item.id, formData, token))
+            dispatch(updateProduct(getEntityId(item), formData, token))
                 .then(() => {
                     Toast.show({
                         topOffset: 60,
@@ -227,7 +234,6 @@ const ProductForm = (props) => {
         }
 
     }
-    console.log(categories)
     return (
         <FormContainer title="Add Product">
             <View style={styles.imageContainer}>
@@ -306,11 +312,12 @@ const ProductForm = (props) => {
                         }
                     }} >
                     {categories.map((c, index) => {
+                        const categoryId = getEntityId(c);
                         return (
                             <Picker.Item
-                                key={c.id}
+                                key={categoryId}
                                 label={c.name}
-                                value={c.id} />
+                                value={categoryId} />
                         )
                     })}
 
