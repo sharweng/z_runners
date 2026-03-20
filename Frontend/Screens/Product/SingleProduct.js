@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Image, View, StyleSheet, Text, ScrollView, TextInput, TouchableOpacity } from "react-native";
+import { Image, View, StyleSheet, Text, ScrollView, TextInput, TouchableOpacity, Dimensions } from "react-native";
 import { Surface, } from "react-native-paper";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
@@ -9,11 +9,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchProductDetails } from '../../Redux/Actions/productActions';
 import { resetReviewSubmit, submitReview as submitReviewAction } from '../../Redux/Actions/reviewActions';
 
+const { width } = Dimensions.get('window');
+
 const SingleProduct = ({ route }) => {
     const [item, setItem] = useState(route.params.item);
     const [rating, setRating] = useState('5');
     const [comment, setComment] = useState('');
     const [editingReviewId, setEditingReviewId] = useState(null);
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
     const context = useContext(AuthGlobal);
     const dispatch = useDispatch();
     const { selected } = useSelector((state) => state.products);
@@ -41,6 +44,16 @@ const SingleProduct = ({ route }) => {
             setItem(selected);
         }
     }, [selected, route.params.item.id]);
+
+    const productImages = [item?.image, ...(Array.isArray(item?.images) ? item.images : [])]
+        .filter(Boolean)
+        .filter((value, index, arr) => arr.indexOf(value) === index);
+
+    const onGalleryScroll = (event) => {
+        const xOffset = event?.nativeEvent?.contentOffset?.x || 0;
+        const nextIndex = Math.round(xOffset / width);
+        setActiveImageIndex(nextIndex);
+    };
 
     const submitReview = () => {
         const parsedRating = Number(rating);
@@ -110,13 +123,36 @@ const SingleProduct = ({ route }) => {
         <Surface style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.heroWrap}>
-                    <Image
-                        source={{
-                            uri: item.image ? item.image : 'https://cdn.pixabay.com/photo/2012/04/01/17/29/box-23649_960_720.png'
-                        }}
-                        resizeMode="contain"
-                        style={styles.image}
-                    />
+                    <ScrollView
+                        horizontal
+                        pagingEnabled
+                        showsHorizontalScrollIndicator={false}
+                        onMomentumScrollEnd={onGalleryScroll}
+                    >
+                        {(productImages.length ? productImages : ['https://cdn.pixabay.com/photo/2012/04/01/17/29/box-23649_960_720.png'])
+                            .map((imageUri) => (
+                                <Image
+                                    key={imageUri}
+                                    source={{ uri: imageUri }}
+                                    resizeMode="contain"
+                                    style={styles.image}
+                                />
+                            ))}
+                    </ScrollView>
+
+                    {productImages.length > 1 ? (
+                        <View style={styles.dotsRow}>
+                            {productImages.map((imageUri, index) => (
+                                <View
+                                    key={`${imageUri}-${index}`}
+                                    style={[
+                                        styles.dot,
+                                        activeImageIndex === index ? styles.dotActive : null,
+                                    ]}
+                                />
+                            ))}
+                        </View>
+                    ) : null}
 
                 </View>
                 <View style={styles.contentContainer}>
@@ -187,8 +223,25 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     image: {
-        width: '100%',
+        width,
         height: 280,
+    },
+    dotsRow: {
+        position: 'absolute',
+        bottom: spacing.sm,
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: spacing.xs,
+    },
+    dot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: 'rgba(255,255,255,0.6)',
+    },
+    dotActive: {
+        backgroundColor: colors.primary,
     },
     contentContainer: {
         marginTop: spacing.lg,

@@ -5,7 +5,8 @@ import {
     Image,
     StyleSheet,
     TouchableOpacity,
-    Platform
+    Platform,
+    ScrollView
 } from "react-native"
 import { Surface } from "react-native-paper"
 import { Picker } from "@react-native-picker/picker"
@@ -24,19 +25,18 @@ import mime from "mime";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radius, shadow, spacing } from "../../Shared/theme";
 import { useDispatch, useSelector } from 'react-redux';
-import { createProduct, updateProduct } from '../../Redux/Actions/productActions';
+import { createProduct, updateProduct, uploadProductGalleryImages } from '../../Redux/Actions/productActions';
 import { fetchCategories } from '../../Redux/Actions/categoryActions';
 
 
 const ProductForm = (props) => {
     // console.log(props.route.params)
-    const [pickerValue, setPickerValue] = useState('');
     const [brand, setBrand] = useState('');
     const [name, setName] = useState('');
     const [price, setPrice] = useState(0);
     const [description, setDescription] = useState('');
-    const [image, setImage] = useState('');
-    const [mainImage, setMainImage] = useState();
+    const [mainImage, setMainImage] = useState('');
+    const [galleryImages, setGalleryImages] = useState([]);
     const [category, setCategory] = useState('');
     const [token, setToken] = useState();
     const [error, setError] = useState();
@@ -46,10 +46,12 @@ const ProductForm = (props) => {
     const [richDescription, setRichDescription] = useState();
     const [numReviews, setNumReviews] = useState(0);
     const [item, setItem] = useState(null);
+    const [hasUserChangedCategory, setHasUserChangedCategory] = useState(false);
 
     let navigation = useNavigation()
     const dispatch = useDispatch();
     const { items: categories } = useSelector((state) => state.categories);
+    const routeItem = props.route?.params?.item;
 
     const getEntityId = (value) => {
         if (!value) return '';
@@ -57,22 +59,72 @@ const ProductForm = (props) => {
         return value.id || value._id || '';
     };
 
-    useEffect(() => {
-        if (!props.route.params) {
-            setItem(null);
-        } else {
-            setItem(props.route.params.item);
-            setBrand(props.route.params.item.brand);
-            setName(props.route.params.item.name);
-            setPrice(props.route.params.item.price.toString());
-            setDescription(props.route.params.item.description);
-            setMainImage(props.route.params.item.image);
-            setImage(props.route.params.item.image);
-            const selectedCategoryId = getEntityId(props.route.params.item.category);
-            setCategory(selectedCategoryId);
-            setPickerValue(selectedCategoryId);
-            setCountInStock(props.route.params.item.countInStock.toString());
+    const getCategoryName = (value) => {
+        if (!value) return '';
+        if (typeof value === 'string') return value;
+        return value.name || '';
+    };
+
+    const normalizeText = (value) => (value || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    const resolveCategoryId = (categoryValue, availableCategories) => {
+        if (!categoryValue || !availableCategories?.length) {
+            return '';
         }
+
+        const rawId = getEntityId(categoryValue);
+        if (rawId) {
+            const byId = availableCategories.find((c) => getEntityId(c) === rawId);
+            if (byId) {
+                return getEntityId(byId);
+            }
+        }
+
+        const rawName = getCategoryName(categoryValue);
+        if (!rawName) {
+            return '';
+        }
+
+        const normalizedRawName = normalizeText(rawName);
+        const byName = availableCategories.find((c) => normalizeText(c?.name) === normalizedRawName);
+        return byName ? getEntityId(byName) : '';
+    };
+
+    useEffect(() => {
+        if (!routeItem) {
+            setItem(null);
+            setBrand('');
+            setName('');
+            setPrice('');
+            setDescription('');
+            setMainImage('');
+            setGalleryImages([]);
+            setCategory('');
+            setHasUserChangedCategory(false);
+            setCountInStock('');
+        } else {
+            setItem(routeItem);
+            setBrand(routeItem.brand || '');
+            setName(routeItem.name || '');
+            setPrice(routeItem.price?.toString?.() || '');
+            setDescription(routeItem.description || '');
+
+            const existingImages = [routeItem.image, ...(Array.isArray(routeItem.images) ? routeItem.images : [])]
+                .filter(Boolean)
+                .filter((value, index, arr) => arr.indexOf(value) === index)
+                .map((uri) => ({ uri }));
+
+            setGalleryImages(existingImages);
+            setMainImage(existingImages[0]?.uri || '');
+
+            const selectedCategoryId = getEntityId(routeItem.category);
+            setCategory(selectedCategoryId || '');
+            setHasUserChangedCategory(false);
+            setCountInStock(routeItem.countInStock?.toString?.() || '');
+        }
+    }, [routeItem]);
+
+    useEffect(() => {
         AsyncStorage.getItem("jwt")
             .then((res) => {
                 setToken(res)
@@ -85,8 +137,12 @@ const ProductForm = (props) => {
                 const {
                     status,
                 } = await ImagePicker.requestCameraPermissionsAsync();
+                const mediaPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
                 if (status !== "granted") {
-                    alert("Sorry, we need camera roll permissions to make this work!")
+                    alert("Sorry, camera permission is required to take product photos.")
+                }
+                if (mediaPermission.status !== "granted") {
+                    alert("Sorry, media library permission is required to upload product photos.")
                 }
             }
         })();
@@ -97,29 +153,146 @@ const ProductForm = (props) => {
             return;
         }
 
-        if (!pickerValue || !category) {
+        if (!category) {
             const firstCategoryId = getEntityId(categories[0]);
             if (firstCategoryId) {
-                setPickerValue(firstCategoryId);
                 setCategory(firstCategoryId);
             }
         }
-    }, [categories, item, pickerValue, category]);
+    }, [categories, item, category]);
 
-    const pickImage = async () => {
+    useEffect(() => {
+        if (!item || !categories?.length || hasUserChangedCategory) {
+            return;
+        }
+
+        const resolvedId = resolveCategoryId(item.category, categories);
+        if (!resolvedId) {
+            return;
+        }
+
+        if (resolvedId === category) {
+            return;
+        }
+
+        setCategory(resolvedId);
+    }, [item, categories, category, hasUserChangedCategory]);
+
+    const appendImages = (assets) => {
+        const incoming = (assets || [])
+            .map((asset) => asset?.uri)
+            .filter(Boolean)
+            .map((uri) => ({ uri }));
+
+        if (!incoming.length) {
+            return;
+        }
+
+        setGalleryImages((prev) => {
+            const merged = [...prev, ...incoming].filter(
+                (value, index, arr) => arr.findIndex((entry) => entry.uri === value.uri) === index
+            );
+
+            if (!mainImage && merged[0]?.uri) {
+                setMainImage(merged[0].uri);
+            }
+
+            return merged;
+        });
+
+        if (!mainImage) {
+            setMainImage(incoming[0].uri);
+        }
+
+        if (error) {
+            setError(null);
+        }
+    };
+
+    const pickFromLibrary = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images',],
-            allowsEditing: true,
-            aspect: [4, 3],
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsMultipleSelection: true,
             quality: 1
         });
 
         if (!result.canceled) {
-            console.log(result.assets)
-            setMainImage(result.assets[0].uri);
-            setImage(result.assets[0].uri);
+            appendImages(result.assets);
         }
-    }
+    };
+
+    const takePhoto = async () => {
+        const result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            appendImages(result.assets);
+        }
+    };
+
+    const setPrimaryImage = (uri) => {
+        if (!uri) {
+            return;
+        }
+
+        setMainImage(uri);
+        setGalleryImages((prev) => {
+            const selected = prev.find((entry) => entry.uri === uri);
+            if (!selected) {
+                return prev;
+            }
+
+            const remaining = prev.filter((entry) => entry.uri !== uri);
+            return [selected, ...remaining];
+        });
+    };
+
+    const removeImage = (uri) => {
+        setGalleryImages((prev) => {
+            const updated = prev.filter((entry) => entry.uri !== uri);
+
+            if (mainImage === uri) {
+                setMainImage(updated[0]?.uri || '');
+            }
+
+            return updated;
+        });
+    };
+
+    const syncProductGallery = async (productId) => {
+        if (!productId) {
+            return;
+        }
+
+        const existingImages = galleryImages
+            .map((entry) => entry.uri)
+            .filter((uri) => uri && !uri.startsWith('file://') && uri !== mainImage);
+
+        const localImages = galleryImages
+            .map((entry) => entry.uri)
+            .filter((uri) => uri && uri.startsWith('file://') && uri !== mainImage);
+
+        if (!existingImages.length && !localImages.length) {
+            return;
+        }
+
+        const galleryFormData = new FormData();
+        existingImages.forEach((uri) => {
+            galleryFormData.append('existingImages', uri);
+        });
+
+        localImages.forEach((uri) => {
+            galleryFormData.append('images', {
+                uri,
+                type: mime.getType(uri) || 'image/jpeg',
+                name: uri.split('/').pop() || `gallery-${Date.now()}.jpg`,
+            });
+        });
+
+        await dispatch(uploadProductGalleryImages(productId, galleryFormData, token));
+    };
 
 
     const addProduct = () => {
@@ -137,8 +310,8 @@ const ProductForm = (props) => {
             return;
         }
 
-        if (!item && !image) {
-            setError("Please select a product image")
+        if (!galleryImages.length || !mainImage) {
+            setError("Please add at least one product image")
             return;
         }
 
@@ -154,7 +327,7 @@ const ProductForm = (props) => {
         }
 
         let formData = new FormData();
-        const hasLocalImage = typeof image === "string" && image.startsWith("file://");
+    const hasLocalMainImage = typeof mainImage === "string" && mainImage.startsWith("file://");
 
         formData.append("name", name);
         formData.append("brand", brand);
@@ -166,16 +339,22 @@ const ProductForm = (props) => {
         formData.append("rating", rating);
         formData.append("numReviews", numReviews);
         formData.append("isFeatured", isFeatured);
-        if (hasLocalImage) {
+        if (hasLocalMainImage) {
             formData.append("image", {
-                uri: image,
-                type: mime.getType(image),
-                name: image.split("/").pop()
+                uri: mainImage,
+                type: mime.getType(mainImage),
+                name: mainImage.split("/").pop()
             });
+        } else if (typeof mainImage === 'string' && mainImage.trim()) {
+            formData.append('imagePath', mainImage.trim());
         }
 
         if (item !== null) {
             dispatch(updateProduct(getEntityId(item), formData, token))
+                .then((updatedProduct) => {
+                    const productId = getEntityId(updatedProduct) || getEntityId(item);
+                    return syncProductGallery(productId);
+                })
                 .then(() => {
                     Toast.show({
                         topOffset: 60,
@@ -198,6 +377,10 @@ const ProductForm = (props) => {
                 })
         } else {
             dispatch(createProduct(formData, token))
+                .then((createdProduct) => {
+                    const productId = getEntityId(createdProduct);
+                    return syncProductGallery(productId);
+                })
                 .then(() => {
                     Toast.show({
                         topOffset: 60,
@@ -237,13 +420,47 @@ const ProductForm = (props) => {
     return (
         <FormContainer title="Add Product">
             <View style={styles.imageContainer}>
-                <Image style={styles.image} source={{ uri: mainImage }} />
-                <TouchableOpacity
-                    onPress={pickImage}
-                    style={styles.imagePicker}>
-                    <Ionicons style={{ color: "white" }} name="camera" />
+                {mainImage ? <Image style={styles.image} source={{ uri: mainImage }} /> : null}
+            </View>
+            <View style={styles.imageActionsRow}>
+                <TouchableOpacity onPress={pickFromLibrary} style={styles.imageActionButton}>
+                    <Ionicons style={styles.imageActionIcon} name="images-outline" />
+                    <Text style={styles.imageActionText}>Upload</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={takePhoto} style={styles.imageActionButton}>
+                    <Ionicons style={styles.imageActionIcon} name="camera-outline" />
+                    <Text style={styles.imageActionText}>Take Photo</Text>
                 </TouchableOpacity>
             </View>
+
+            {galleryImages.length ? (
+                <>
+                    <View style={styles.label}>
+                        <Text style={{ textDecorationLine: "underline" }}>Product Images (tap to set primary)</Text>
+                    </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.galleryRow}>
+                        {galleryImages.map((entry) => (
+                            <View key={entry.uri} style={styles.galleryItemWrap}>
+                                <TouchableOpacity onPress={() => setPrimaryImage(entry.uri)}>
+                                    <Image
+                                        source={{ uri: entry.uri }}
+                                        style={[
+                                            styles.galleryImage,
+                                            mainImage === entry.uri ? styles.galleryImagePrimary : null,
+                                        ]}
+                                    />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.removeImageButton}
+                                    onPress={() => removeImage(entry.uri)}
+                                >
+                                    <Ionicons name="close" color="white" size={14} />
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                    </ScrollView>
+                </>
+            ) : null}
             <View style={styles.label}>
                 <Text style={{ textDecorationLine: "underline" }}>Brand</Text>
             </View>
@@ -303,14 +520,15 @@ const ProductForm = (props) => {
                     style={{ height: 100, width: 300 }}
                     minWidth="100%"
                     placeholder="Select your Category"
-                    selectedValue={pickerValue}
+                    selectedValue={category || ''}
                     onValueChange={(e) => {
-                        setPickerValue(e);
+                        setHasUserChangedCategory(true);
                         setCategory(e || '');
                         if (error) {
                             setError(null);
                         }
                     }} >
+                    <Picker.Item label="Select Category" value="" />
                     {categories.map((c, index) => {
                         const categoryId = getEntityId(c);
                         return (
@@ -368,15 +586,58 @@ const styles = StyleSheet.create({
         height: "100%",
         borderRadius: 100
     },
-    imagePicker: {
-        position: "absolute",
-        right: 5,
-        bottom: 5,
+    imageActionsRow: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: spacing.md,
+        marginTop: spacing.md,
+    },
+    imageActionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
         backgroundColor: colors.primary,
-        padding: 8,
-        borderRadius: 100,
-        elevation: 20
-    }
+        borderRadius: radius.pill,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+    },
+    imageActionIcon: {
+        color: 'white',
+        marginRight: spacing.xs,
+    },
+    imageActionText: {
+        color: 'white',
+        fontWeight: '700',
+    },
+    galleryRow: {
+        paddingVertical: spacing.sm,
+        paddingRight: spacing.md,
+    },
+    galleryItemWrap: {
+        marginRight: spacing.sm,
+    },
+    galleryImage: {
+        width: 72,
+        height: 72,
+        borderRadius: radius.md,
+        borderWidth: 2,
+        borderColor: 'transparent',
+    },
+    galleryImagePrimary: {
+        borderColor: colors.primary,
+    },
+    removeImageButton: {
+        position: 'absolute',
+        top: -6,
+        right: -6,
+        backgroundColor: colors.danger,
+        borderRadius: radius.pill,
+        width: 20,
+        height: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
 })
 
 

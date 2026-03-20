@@ -37,7 +37,7 @@ const SearchedProduct = ({ productsFiltered }) => {
 
                             </TouchableOpacity>}
 
-                        keyExtractor={item => item._id} />
+                        keyExtractor={(item) => item.id || item._id} />
                 </Surface >
             ) : (
                 <View style={styles.center}>

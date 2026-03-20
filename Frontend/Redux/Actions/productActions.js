@@ -84,6 +84,18 @@ export const updateProduct = (id, formData, token) => async (dispatch) => {
     }
 };
 
+export const uploadProductGalleryImages = (id, formData, token) => async () => {
+    const config = {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+        },
+    };
+
+    const { data } = await axios.put(`${baseURL}products/gallery-images/${id}`, formData, config);
+    return data;
+};
+
 export const deleteProduct = (id, token) => async (dispatch) => {
     dispatch({ type: PRODUCT_DELETE_REQUEST });
     try {

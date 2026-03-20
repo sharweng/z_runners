@@ -55,14 +55,28 @@ const Products = (props) => {
         )
     }
     const searchProduct = (text) => {
-        if (text === "") {
-            setProductFilter(productList)
+        const query = (text || "").trim().toLowerCase();
+
+        if (!query) {
+            setProductFilter(productList || []);
+            return;
         }
+
         setProductFilter(
-            productList.filter((i) =>
-                i.name.toLowerCase().includes(text.toLowerCase())
-            )
-        )
+            (productList || []).filter((i) => {
+                const name = (i?.name || "").toLowerCase();
+                const brand = (i?.brand || "").toLowerCase();
+                const category = (i?.category?.name || "").toLowerCase();
+                const price = `${i?.price ?? ""}`.toLowerCase();
+
+                return (
+                    name.includes(query) ||
+                    brand.includes(query) ||
+                    category.includes(query) ||
+                    price.includes(query)
+                );
+            })
+        );
     }
 
     const handleDeleteProduct = (id) => {

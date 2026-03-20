@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ActivityIndicator, Dimensions, ScrollView } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
 import { Surface, Text, TextInput, Searchbar } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
+import { Ionicons } from '@expo/vector-icons';
 
 import Banner from '../../Shared/Banner';
 import CategoryFilter from './CategoryFilter';
@@ -26,6 +27,7 @@ const ProductContainer = ({ route }) => {
     const [maxPrice, setMaxPrice] = useState('');
     const [loading, setLoading] = useState(true);
     const [priceError, setPriceError] = useState('');
+    const [priceFilterExpanded, setPriceFilterExpanded] = useState(false);
     const dispatch = useDispatch();
     const { items: products, loading: productsLoading } = useSelector((state) => state.products);
     const { items: categories } = useSelector((state) => state.categories);
@@ -37,12 +39,22 @@ const ProductContainer = ({ route }) => {
     };
 
     const applyFilters = (allProducts, searchTerm, categoryId, min, max) => {
+        const normalizedSearch = (searchTerm || '').trim().toLowerCase();
         const minValue = min !== '' && !Number.isNaN(Number(min)) ? Number(min) : null;
         const maxValue = max !== '' && !Number.isNaN(Number(max)) ? Number(max) : null;
 
         return allProducts.filter((product) => {
             const name = product?.name ? product.name.toLowerCase() : '';
-            const matchesSearch = name.includes(searchTerm.toLowerCase());
+            const brand = product?.brand ? product.brand.toLowerCase() : '';
+            const categoryName = product?.category?.name ? product.category.name.toLowerCase() : '';
+            const priceText = product?.price !== undefined && product?.price !== null ? `${product.price}`.toLowerCase() : '';
+
+            const matchesSearch =
+                normalizedSearch === '' ||
+                name.includes(normalizedSearch) ||
+                brand.includes(normalizedSearch) ||
+                categoryName.includes(normalizedSearch) ||
+                priceText.includes(normalizedSearch);
 
             const productCategoryId = getCategoryId(product);
             const matchesCategory = categoryId === 'all' || productCategoryId === categoryId;
@@ -72,8 +84,19 @@ const ProductContainer = ({ route }) => {
     useEffect(() => {
         if (route?.params?.openSearch) {
             setSearchVisible(true);
+            setFocus(true);
+            if (typeof route?.params?.headerSearchText === 'string') {
+                setKeyword(route.params.headerSearchText);
+            }
+            return;
         }
-    }, [route?.params?.openSearch]);
+
+        setSearchVisible(false);
+        setFocus(false);
+        if (route?.params?.headerSearchText === '') {
+            setKeyword('');
+        }
+    }, [route?.params?.openSearch, route?.params?.headerSearchText]);
 
     useEffect(() => {
         const minValue = minPrice !== '' && !Number.isNaN(Number(minPrice)) ? Number(minPrice) : null;
@@ -129,6 +152,49 @@ const ProductContainer = ({ route }) => {
         setLoading(productsLoading);
     }, [productsLoading]);
 
+    const renderFilters = () => (
+        <View style={styles.filtersSection}>
+            <TouchableOpacity
+                style={styles.filterToggleButton}
+                activeOpacity={0.85}
+                onPress={() => setPriceFilterExpanded((prev) => !prev)}
+            >
+                <View style={styles.filterToggleLeft}>
+                    <Ionicons name="options-outline" size={18} color={colors.text} />
+                    <Text style={styles.filterToggleText}>Price Filter</Text>
+                </View>
+                <Ionicons
+                    name={priceFilterExpanded ? 'chevron-up' : 'chevron-down'}
+                    size={18}
+                    color={colors.muted}
+                />
+            </TouchableOpacity>
+
+            {priceFilterExpanded ? (
+                <View style={styles.priceFilterContainer}>
+                    <TextInput
+                        mode="outlined"
+                        label="Min Price"
+                        value={minPrice}
+                        onChangeText={setMinPrice}
+                        keyboardType="numeric"
+                        style={styles.priceInput}
+                    />
+                    <TextInput
+                        mode="outlined"
+                        label="Max Price"
+                        value={maxPrice}
+                        onChangeText={setMaxPrice}
+                        keyboardType="numeric"
+                        style={styles.priceInput}
+                    />
+                </View>
+            ) : null}
+
+            {priceError ? <Text style={styles.errorText}>{priceError}</Text> : null}
+        </View>
+    );
+
     return (
         <Surface style={styles.container}>
             {loading ? (
@@ -137,70 +203,50 @@ const ProductContainer = ({ route }) => {
                 </View>
             ) : null}
 
-            <ScrollView>
-                {searchVisible ? (
-                    <View style={styles.searchWrap}>
-                        <Searchbar
-                            placeholder="Search"
-                            onChangeText={(text) => {
-                                searchProduct(text);
-                                setFocus(true);
-                            }}
-                            value={keyword}
-                            style={styles.searchbar}
-                            onIconPress={() => {
-                                setKeyword('');
-                                onBlur();
-                            }}
-                        />
-                    </View>
-                ) : null}
+            {focus ? (
+                <View style={styles.focusContainer}>
+                    {searchVisible ? (
+                        <View style={styles.searchWrap} />
+                    ) : null}
 
-                <Banner />
-                <CategoryFilter
-                    categories={categories}
-                    categoryFilter={changeCtg}
-                    active={active}
-                    setActive={setActive}
-                />
-
-                <View style={styles.filtersSection}>
-                    <View style={styles.priceFilterContainer}>
-                        <TextInput
-                            mode="outlined"
-                            label="Min Price"
-                            value={minPrice}
-                            onChangeText={setMinPrice}
-                            keyboardType="numeric"
-                            style={styles.priceInput}
-                        />
-                        <TextInput
-                            mode="outlined"
-                            label="Max Price"
-                            value={maxPrice}
-                            onChangeText={setMaxPrice}
-                            keyboardType="numeric"
-                            style={styles.priceInput}
-                        />
-                    </View>
-
-                    {priceError ? <Text style={styles.errorText}>{priceError}</Text> : null}
-                </View>
-
-                {focus ? (
+                    <Banner />
+                    <CategoryFilter
+                        categories={categories}
+                        categoryFilter={changeCtg}
+                        active={active}
+                        setActive={setActive}
+                    />
+                    {renderFilters()}
                     <SearchedProduct productsFiltered={productsFiltered} />
-                ) : productsCtg.length > 0 ? (
+                </View>
+            ) : (
+                <ScrollView>
+                    {searchVisible ? (
+                        <View style={styles.searchWrap} />
+                    ) : null}
+
+                    <Banner />
+                    <CategoryFilter
+                        categories={categories}
+                        categoryFilter={changeCtg}
+                        active={active}
+                        setActive={setActive}
+                    />
+                    {renderFilters()}
+
+                    {productsCtg.length > 0 ? (
                     <View style={styles.listContainer}>
                         {productsCtg.map((item) => (
                             <ProductList key={item.id} item={item} />
                         ))}
                     </View>
-                ) : (
-                    <View style={[styles.center, { height: height / 2 }]}>
-                        <Text style={styles.emptyText}>No products found</Text>
-                    </View>
-                )}
-            </ScrollView>
+                    ) : (
+                        <View style={[styles.center, { height: height / 2 }]}>
+                            <Text style={styles.emptyText}>No products found</Text>
+                        </View>
+                    )}
+                </ScrollView>
+            )}
         </Surface>
     );
 };
@@ -224,10 +270,34 @@ const styles = StyleSheet.create({
     searchWrap: {
         paddingBottom: spacing.sm,
     },
+    focusContainer: {
+        flex: 1,
+    },
     filtersSection: {
         paddingHorizontal: spacing.lg,
         marginTop: spacing.sm,
         marginBottom: spacing.sm,
+    },
+    filterToggleButton: {
+        borderWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        borderRadius: radius.md,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: spacing.sm,
+    },
+    filterToggleLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
+    },
+    filterToggleText: {
+        color: colors.text,
+        fontWeight: '700',
     },
     priceFilterContainer: {
         flexDirection: 'row',
