@@ -13,6 +13,7 @@ import {
 import Icon from "react-native-vector-icons/FontAwesome"
 import { useNavigation } from "@react-navigation/native"
 import EasyButton from "../../Shared/StyledComponents/EasyButton";
+import { colors, radius, shadow, spacing } from "../../Shared/theme";
 
 
 var { width } = Dimensions.get("window");
@@ -110,7 +111,7 @@ const ListItem = ({ item, index, deleteProduct }) => {
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-        padding: 5,
+        padding: 8,
         width: width
     },
     image: {
@@ -132,18 +133,13 @@ const styles = StyleSheet.create({
     },
     modalView: {
         margin: 20,
-        backgroundColor: "white",
-        borderRadius: 20,
-        padding: 35,
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
+        padding: 28,
         alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5
+        borderWidth: 1,
+        borderColor: colors.border,
+        ...shadow,
     },
     textStyle: {
         color: "white",

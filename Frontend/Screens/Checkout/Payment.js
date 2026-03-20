@@ -5,6 +5,7 @@ import { Surface, RadioButton, Text } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 
 import { Picker } from '@react-native-picker/picker';
+import { colors, radius, spacing } from '../../Shared/theme';
 
 const methods = [
   { name: 'Cash on Delivery', value: 1 },
@@ -29,8 +30,8 @@ const Payment = ({ route }) => {
   const navigation = useNavigation()
   return (
     <View style={styles.container}  >
-      <Text variant="displaySmall">Choose your payment method</Text>
-      <Surface width="100%"  >
+      <Text style={styles.title}>Choose your payment method</Text>
+      <Surface style={styles.card}  >
         <RadioButton.Group
           name="myRadioGroup"
           value={selected}
@@ -67,9 +68,9 @@ const Payment = ({ route }) => {
       </Surface>
 
       {selected === 3 ? (
-        <Surface>
+        <Surface style={styles.card}>
           <Picker
-            style={{ height: 50, width: 300 }}
+            style={styles.picker}
 
             selectedValue={card}
             placeholder="Choose Service"
@@ -91,6 +92,7 @@ const Payment = ({ route }) => {
 
       <View style={{ marginTop: 60, alignSelf: 'center' }}>
         <Button
+          color={colors.primary}
           title={"Confirm"}
           onPress={() => navigation.navigate("Confirm", { order })} />
       </View>
@@ -104,7 +106,27 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.lg,
 
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: spacing.lg,
+  },
+  card: {
+    width: '100%',
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
+  },
+  picker: {
+    height: 56,
+    width: '100%',
   },
 })
 export default Payment;

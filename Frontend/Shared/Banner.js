@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Image, StyleSheet, Dimensions, View, ScrollView } from "react-native";
+import { Image, StyleSheet, Dimensions, View } from "react-native";
 import Swiper from "react-native-swiper";
+import { colors, radius, shadow } from "./theme";
 
 var { width } = Dimensions.get("window");
 
@@ -20,48 +21,71 @@ const Banner = () => {
   }, []);
 
   return (
-    <ScrollView>
-      <View style={styles.container}>
-        <View style={styles.swiper}>
-          <Swiper
-            style={{ height: width / 2 }}
-            showButtons={false}
-            autoplay={true}
-            autoplayTimeout={2}
-          >
-            {bannerData.map((item) => {
-              return (
-                <Image
-                  key={item}
-                  style={styles.imageBanner}
-                  resizeMode="contain"
-                  source={{ uri: item }}
-                />
-              );
-            })}
-          </Swiper>
-          <View style={{ height: 20 }}></View>
-        </View>
+    <View style={styles.container}>
+      <Swiper
+        style={styles.swiperTrack}
+        showsPagination={true}
+        dotStyle={styles.dot}
+        activeDotStyle={styles.activeDot}
+        paginationStyle={styles.pagination}
+        showButtons={false}
+        autoplay={true}
+        autoplayTimeout={2}
+      >
+        {bannerData.map((item) => {
+          return (
+            <View key={item} style={styles.slide}>
+              <Image
+                style={styles.imageBanner}
+                resizeMode="cover"
+                source={{ uri: item }}
+              />
+            </View>
+          );
+        })}
+      </Swiper>
+      <View style={{ height: 8 }} />
       </View>
-    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "gainsboro",
-  },
-  swiper: {
     width: width,
-    alignItems: "center",
-    marginTop: 10,
+    backgroundColor: colors.background,
+  },
+  swiperTrack: {
+    height: 192,
+  },
+  slide: {
+    width: width,
+    paddingHorizontal: 0,
   },
   imageBanner: {
-    height: width / 2,
-    width: width - 40,
-    borderRadius: 10,
-    marginHorizontal: 20,
+    height: 192,
+    width: width,
+    borderRadius: 0,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadow,
+  },
+  pagination: {
+    bottom: 10,
+  },
+  dot: {
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    width: 7,
+    height: 7,
+    borderRadius: 7,
+    marginHorizontal: 3,
+  },
+  activeDot: {
+    backgroundColor: colors.primary,
+    width: 8,
+    height: 8,
+    borderRadius: 8,
+    marginHorizontal: 3,
   },
 });
 

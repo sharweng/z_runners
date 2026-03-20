@@ -8,6 +8,7 @@ import FormContainer from "../../Shared/FormContainer";
 import AuthGlobal from '../../Context/Store/AuthGlobal'
 import { loginUser } from '../../Context/Actions/Auth.actions'
 import Input from "../../Shared/Input";
+import { colors, spacing } from "../../Shared/theme";
 
 const Login = (props) => {
     const context = useContext(AuthGlobal)
@@ -45,7 +46,7 @@ const Login = (props) => {
     });
 
     return (
-        <FormContainer >
+        <FormContainer title="Welcome back">
             <Input
                 placeholder={"Enter email"}
                 name={"email"}
@@ -62,24 +63,26 @@ const Login = (props) => {
                 onChangeText={(text) => setPassword(text)}
             />
             <View style={styles.buttonGroup}>
-                <Button title="Login"
+                <Button color={colors.accent} title="Login"
                     onPress={() => handleSubmit()} />
             </View>
             <View style={styles.buttonGroup}>
                 <Text style={styles.middleText}>Dont' Have an Account yet?</Text>
-                <Button title="register" onPress={() => navigation.navigate("Register")} />
+                <Button color={colors.primary} title="Register" onPress={() => navigation.navigate("Register")} />
             </View>
         </FormContainer>
     )
 }
 const styles = StyleSheet.create({
     buttonGroup: {
-        width: "80%",
+        width: "100%",
         alignItems: "center",
+        marginTop: spacing.sm,
     },
     middleText: {
-        marginBottom: 100,
+        marginVertical: spacing.md,
         alignSelf: "center",
+        color: colors.muted,
     },
 });
 export default Login;

@@ -24,6 +24,7 @@ import * as ImagePicker from "expo-image-picker"
 import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import mime from "mime";
 import { Ionicons } from "@expo/vector-icons";
+import { colors, radius, shadow, spacing } from "../../Shared/theme";
 
 
 const ProductForm = (props) => {
@@ -294,11 +295,11 @@ const ProductForm = (props) => {
 
 const styles = StyleSheet.create({
     label: {
-        width: "80%",
+        width: "100%",
         marginTop: 10
     },
     buttonContainer: {
-        width: "80%",
+        width: "100%",
         marginBottom: 100,
         marginTop: 20,
         alignItems: "center"
@@ -310,12 +311,13 @@ const styles = StyleSheet.create({
         width: 200,
         height: 200,
         borderStyle: "solid",
-        borderWidth: 8,
+        borderWidth: 1,
         padding: 0,
         justifyContent: "center",
         borderRadius: 100,
-        borderColor: "#E0E0E0",
-        elevation: 10
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        ...shadow,
     },
     image: {
         width: "100%",
@@ -326,7 +328,7 @@ const styles = StyleSheet.create({
         position: "absolute",
         right: 5,
         bottom: 5,
-        backgroundColor: "grey",
+        backgroundColor: colors.primary,
         padding: 8,
         borderRadius: 100,
         elevation: 20

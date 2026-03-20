@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import axios from "axios";
 import baseURL from "../constants/baseurl";
 import { useNavigation } from '@react-navigation/native'
+import { colors, radius, shadow, spacing } from "./theme";
 
 const codes = [
   { name: "pending", code: "3" },
@@ -100,37 +101,29 @@ const OrderCard = ({ item, update }) => {
 
   return (
 
-    <View style={[{ backgroundColor: cardColor }, styles.container]}>
-      <View style={styles.container}>
-        <Text>Order Number: #{item.id}</Text>
+    <View style={[styles.container, { borderColor: cardColor }]}> 
+      <View style={styles.header}>
+        <Text style={styles.orderNumber}>Order #{item.id}</Text>
+        <View style={styles.statusPill}>
+          <Text style={styles.statusText}>{statusText}</Text>
+          {orderStatus}
+        </View>
       </View>
-      <View style={{ marginTop: 10 }}>
-        <Text>
-          Status: {statusText} {orderStatus}
-        </Text>
-        <Text>
-          Address: {item.shippingAddress1} {item.shippingAddress2}
-        </Text>
-        <Text>City: {item.city}</Text>
-        <Text>Country: {item.country}</Text>
-        <Text>Date Ordered: {item.dateOrdered.split("T")[0]}</Text>
+      <View style={styles.body}>
+        <Text style={styles.meta}>Address: {item.shippingAddress1} {item.shippingAddress2}</Text>
+        <Text style={styles.meta}>City: {item.city}</Text>
+        <Text style={styles.meta}>Country: {item.country}</Text>
+        <Text style={styles.meta}>Date Ordered: {item.dateOrdered.split("T")[0]}</Text>
         <View style={styles.priceContainer}>
-          <Text>Price: </Text>
+          <Text style={styles.meta}>Price</Text>
           <Text style={styles.price}>$ {item.totalPrice}</Text>
         </View>
-        {/* {item.editMode ? ( */}
         {update ? <View>
           <>
             <Picker
-              width="80%"
-
-              style={{ width: undefined }}
+              style={styles.picker}
               selectedValue={statusChange}
-              color="white"
-              placeholder="Change Status"
-              placeholderTextColor="white"
-              placeholderStyle={{ color: '#FFFFFF' }}
-              placeholderIconColor="#007aff"
+              dropdownIconColor={colors.primary}
               onValueChange={(e) => setStatusChange(e)}
             >
               {codes.map((c) => {
@@ -144,6 +137,7 @@ const OrderCard = ({ item, update }) => {
             <EasyButton
               secondary
               large
+              style={styles.actionButton}
               onPress={() => updateOrder()}
             >
               <Text style={{ color: "white" }}>Update</Text>
@@ -161,22 +155,60 @@ const OrderCard = ({ item, update }) => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    margin: 10,
-    borderRadius: 10,
+    padding: spacing.lg,
+    margin: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadow,
   },
-  title: {
-    backgroundColor: "#62B1F6",
-    padding: 5,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  orderNumber: {
+    fontWeight: '800',
+    color: colors.text,
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceSoft,
+  },
+  statusText: {
+    textTransform: 'capitalize',
+    color: colors.text,
+    fontWeight: '700',
+  },
+  body: {
+    gap: spacing.xs,
+  },
+  meta: {
+    color: colors.muted,
   },
   priceContainer: {
-    marginTop: 10,
-    alignSelf: "flex-end",
+    marginTop: spacing.sm,
     flexDirection: "row",
+    justifyContent: 'space-between',
   },
   price: {
-    color: "white",
+    color: colors.primary,
     fontWeight: "bold",
+  },
+  picker: {
+    backgroundColor: colors.surfaceSoft,
+    marginTop: spacing.sm,
+  },
+  actionButton: {
+    alignSelf: 'flex-start',
+    marginTop: spacing.sm,
   },
 });
 

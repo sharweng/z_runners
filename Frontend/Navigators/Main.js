@@ -1,6 +1,5 @@
 import React, { useContext } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { View } from "react-native";
 // import FontAwesome from "react-native-vector-icons/FontAwesome";
 import HomeNavigator from "./HomeNavigator";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,6 +7,7 @@ import CartNavigator from "./CartNavigator";
 import CartIcon from "../Shared/CartIcon";
 import UserNavigator from "./UserNavigator";
 import AdminNavigator from "./AdminNavigator";
+import { colors } from "../Shared/theme";
 const Tab = createBottomTabNavigator();
 
 const Main = () => {
@@ -18,7 +18,15 @@ const Main = () => {
                 headerShown: false,
                 tabBarHideOnKeyboard: true,
                 tabBarShowLabel: false,
-                tabBarActiveTintColor: '#e91e63'
+                tabBarActiveTintColor: colors.accent,
+                tabBarInactiveTintColor: colors.muted,
+                tabBarStyle: {
+                    backgroundColor: colors.surface,
+                    borderTopColor: colors.border,
+                    height: 66,
+                    paddingBottom: 8,
+                    paddingTop: 8,
+                },
             }}
         >
             <Tab.Screen
@@ -31,7 +39,7 @@ const Main = () => {
                             name="home"
                             style={{ position: "relative" }}
                             color={color}
-                            size={30}
+                            size={26}
 
                         />
                     }
@@ -49,7 +57,7 @@ const Main = () => {
                                 name="cart"
                                 style={{ position: "relative" }}
                                 color={color}
-                                size={30}
+                                size={26}
 
                             />
                             <CartIcon />
@@ -68,7 +76,7 @@ const Main = () => {
                             name="cog"
                             style={{ position: "relative" }}
                             color={color}
-                            size={30}
+                            size={26}
 
                         />
                     }
@@ -83,7 +91,7 @@ const Main = () => {
                             name="person"
                             style={{ position: "relative" }}
                             color={color}
-                            size={30}
+                            size={26}
 
                         />
                     }

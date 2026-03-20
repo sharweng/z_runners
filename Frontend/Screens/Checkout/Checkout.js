@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react'
-import { Text, View, Button, SafeAreaView, Select } from 'react-native'
+import { Text, View, Button, SafeAreaView, Select, StyleSheet } from 'react-native'
 
 import Icon from 'react-native-vector-icons/FontAwesome'
 import FormContainer from '../../Shared/FormContainer'
@@ -13,6 +13,7 @@ import { Picker } from '@react-native-picker/picker'
 const countries = require("../../data/countries.json");
 import AuthGlobal from '../../Context/Store/AuthGlobal'
 import Toast from 'react-native-toast-message'
+import { colors, spacing } from '../../Shared/theme'
 const Checkout = (props) => {
     const [user, setUser] = useState('')
     const [orderItems, setOrderItems] = useState([])
@@ -103,8 +104,7 @@ const Checkout = (props) => {
                     onChangeText={(text) => setZip(text)}
                 />
                 <Picker
-                    // label="Countries"
-                    style={{ height: 100, width: 300 }}
+                    style={styles.picker}
                     minWidth="100%"
                     placeholder="Select your Country"
                     selectedValue={country}
@@ -125,12 +125,20 @@ const Checkout = (props) => {
 
 
                 <View style={{ width: '80%', alignItems: "center" }}>
-                    <Button title="Confirm" onPress={() => checkOut()} />
+                    <Button color={colors.accent} title="Confirm" onPress={() => checkOut()} />
                 </View>
             </FormContainer>
         </KeyboardAwareScrollView>
 
     )
 }
+
+const styles = StyleSheet.create({
+    picker: {
+        width: '100%',
+        backgroundColor: colors.surface,
+        marginTop: spacing.sm,
+    },
+});
 
 export default Checkout

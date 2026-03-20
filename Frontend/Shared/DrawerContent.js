@@ -1,17 +1,21 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useState, useEffect } from 'react';
-import { Drawer, } from 'react-native-paper';
-import { Platform, Alert } from 'react-native';
+import React from 'react';
+import { Drawer } from 'react-native-paper';
+import { View, Text, StyleSheet } from 'react-native';
+import { colors, radius, spacing } from './theme';
 
 
 
 const DrawerContent = () => {
-  const [active, setActive] = useState('');
-
   const navigation = useNavigation();
 
   return (
-    <Drawer.Section title="Drawer">
+    <View style={styles.container}>
+      <View style={styles.brandBlock}>
+        <Text style={styles.brandName}>Zone Runners</Text>
+        <Text style={styles.brandTag}>Simple sports shopping</Text>
+      </View>
+      <Drawer.Section>
       <Drawer.Item
         label="My Profile"
 
@@ -24,20 +28,43 @@ const DrawerContent = () => {
         icon="cart-variant"
       />
       <Drawer.Item
-        label="Recents"
-        active={active === 'Recents'}
-        onPress={() => onClick('Recents')}
+        label="Cart"
+        onPress={() => navigation.navigate('Cart Screen', { screen: 'Cart' })}
         icon="history"
       />
       <Drawer.Item
         label="Notifications"
-        active={active === 'Notifications'}
-        // onPress={sendPushNotificationHandler}
+        onPress={() => {}}
         icon="bell"
       />
 
-    </Drawer.Section>
+      </Drawer.Section>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    paddingTop: 48,
+  },
+  brandBlock: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    padding: spacing.lg,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceSoft,
+  },
+  brandName: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.text,
+  },
+  brandTag: {
+    marginTop: 4,
+    color: colors.muted,
+  },
+});
 
 export default DrawerContent;

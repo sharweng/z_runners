@@ -1,52 +1,58 @@
 import styled, { css } from "styled-components/native";
+import { colors } from "../theme";
 
 const EasyButton = styled.TouchableOpacity`
     flex-direction: row;
-    border-radius: 3px;
-    padding: 10px;
-    margin: 5px;
+    border-radius: 999px;
+    padding: 12px 16px;
+    margin: 6px;
     justify-content: center;
-    background: transparent;
+    align-items: center;
+    background: ${colors.surfaceSoft};
+    border: 1px solid ${colors.border};
 
     ${(props) =>
         props.primary &&
         css`
-            background: #5cb85c;
+            background: ${colors.primary};
+            border-color: ${colors.primary};
         `
     }
 
     ${(props) =>
         props.secondary &&
         css`
-            background: #62b1f6;
+            background: ${colors.accent};
+            border-color: ${colors.accent};
         `
     }
 
     ${(props) => 
         props.danger &&
         css`
-            background: #f40105;
+            background: ${colors.danger};
+            border-color: ${colors.danger};
         `
     }
 
     ${(props) => 
         props.large &&
         css`
-            width: 135px;
+            min-width: 150px;
         `
     }
 
     ${(props) => 
         props.medium &&
         css`
-            width: 100px;
+            min-width: 110px;
         `
     }
 
     ${(props) => 
         props.small &&
         css`
-            width: 40px;
+            min-width: 44px;
         `
     }
 `;

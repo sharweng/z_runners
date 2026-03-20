@@ -1,48 +1,57 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, ScrollView, FlatList, View, Text } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { Badge, } from 'react-native-paper';
+import { StyleSheet, TouchableOpacity, ScrollView, View, Text } from 'react-native';
+import { colors, radius, spacing } from '../../Shared/theme';
+
+const formatLabel = (value) => {
+    if (!value) return '';
+    return value
+        .toString()
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+};
 
 const CategoryFilter = (props) => {
     console.log(props)
     return (
-
         <ScrollView
             bounces={true}
             horizontal={true}
-            style={{ backgroundColor: "#f2f2f2" }}
+            style={styles.scroll}
+            contentContainerStyle={styles.content}
+            showsHorizontalScrollIndicator={false}
         >
-            <View style={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View style={styles.row}>
                 <TouchableOpacity
                     key={1}
+                    activeOpacity={0.85}
                     onPress={() => {
-                        props.categoryFilter('all'), props.setActive(-1)
+                        props.categoryFilter('all');
+                        props.setActive(-1);
                     }}
+                    style={[styles.chip, props.active === -1 ? styles.active : styles.inactive]}
                 >
-                    <Badge style={[styles.center, { margin: 4 },
-                    props.active === -1 ? styles.active : styles.inactive]}  >
-                        <Text style={{ color: 'white' }}>all</Text>
-                    </Badge>
+                    <Text style={[styles.chipText, props.active === -1 ? styles.activeText : styles.inactiveText]}>All</Text>
                 </TouchableOpacity>
-                {props.categories.map((item) => (
-                    <TouchableOpacity
-                        key={item._id}
-                        onPress={() => {
-                            props.categoryFilter(item._id),
-                                props.setActive(props.categories.indexOf(item))
-                        }}
-                    >
-                        <Badge
-                            style={[styles.center,
-                            { margin: 5 },
-                            props.active == props.categories.indexOf(item) ? styles.active : styles.inactive
-                            ]}
-                        >
-                            <Text style={{ color: 'white' }}>{item.name}</Text>
-                        </Badge>
-                    </TouchableOpacity>
-                ))}
+                {props.categories.map((item) => {
+                    const index = props.categories.indexOf(item);
+                    const isActive = props.active === index;
 
+                    return (
+                        <TouchableOpacity
+                            key={item._id}
+                            activeOpacity={0.85}
+                            onPress={() => {
+                                props.categoryFilter(item._id);
+                                props.setActive(index);
+                            }}
+                            style={[styles.chip, isActive ? styles.active : styles.inactive]}
+                        >
+                            <Text style={[styles.chipText, isActive ? styles.activeText : styles.inactiveText]}>
+                                {formatLabel(item.name)}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
             </View>
         </ScrollView>
 
@@ -51,16 +60,46 @@ const CategoryFilter = (props) => {
 }
 
 const styles = StyleSheet.create({
-    center: {
+    scroll: {
+        backgroundColor: colors.background,
+    },
+    content: {
+        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.sm,
+    },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+    },
+    chip: {
+        minHeight: 38,
+        paddingHorizontal: spacing.md,
+        borderRadius: radius.pill,
         justifyContent: 'center',
         alignItems: 'center'
     },
     active: {
-        backgroundColor: '#03bafc'
+        backgroundColor: colors.primary,
+        borderWidth: 1,
+        borderColor: colors.primary,
     },
     inactive: {
-        backgroundColor: '#a0e1eb'
-    }
+        backgroundColor: colors.surfaceSoft,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    chipText: {
+        fontSize: 13,
+        fontWeight: '700',
+        textTransform: 'capitalize',
+    },
+    activeText: {
+        color: colors.surface,
+    },
+    inactiveText: {
+        color: colors.text,
+    },
 })
 
 export default CategoryFilter;

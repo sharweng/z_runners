@@ -10,6 +10,7 @@ import { removeFromCart, clearCart } from '../../Redux/Actions/cartActions'
 import { Surface, Divider, Avatar, Button } from 'react-native-paper';
 var { height, width } = Dimensions.get("window");
 import { Ionicons } from "@expo/vector-icons";
+import { colors, radius, shadow, spacing } from '../../Shared/theme';
 
 const Cart = () => {
     const navigation = useNavigation()
@@ -23,19 +24,19 @@ const Cart = () => {
     });
     const renderItem = ({ item, index }) =>
         <TouchableHighlight>
-            <Surface pl="4" pr="5" py="2" bg="white" keyExtractor={item => item.id}>
+            <Surface style={styles.card} keyExtractor={item => item.id}>
 
                 <Avatar.Image size={48} source={{
                     uri: item.image ?
                         item.image : 'https://cdn.pixabay.com/photo/2012/04/01/17/29/box-23649_960_720.png'
                 }} />
 
-                <Text>
+                <Text style={styles.itemName}>
                     {item.name}
                 </Text>
 
                 <Divider />
-                <Text fontSize="xs" color="coolGray.800" alignSelf="flex-start">
+                <Text style={styles.price}>
                     $ {item.price}
                 </Text>
 
@@ -47,7 +48,7 @@ const Cart = () => {
         <TouchableOpacity
             onPress={() => dispatch(removeFromCart(cartItems.item))}
         >
-            <Surface alignItems="center" style={styles.hiddenButton} >
+            <Surface style={styles.hiddenButton} >
                 <View >
                     <Ionicons name="trash" color={"white"} size={30} bg="red" />
                     <Text color="white" fontSize="xs" fontWeight="medium">
@@ -60,7 +61,7 @@ const Cart = () => {
     return (
         <>
             {cartItems.length > 0 ? (
-                <Surface bg="white" safeArea flex="1" width="100%" >
+                <Surface style={styles.listSurface} >
                     <SwipeListView
                         data={cartItems}
                         renderItem={renderItem}
@@ -75,26 +76,26 @@ const Cart = () => {
                 </Surface>
             ) : (
                 <Surface style={styles.emptyContainer}>
-                    <Text >No items in cart
+                    <Text style={styles.emptyText}>No items in cart
                     </Text>
                 </Surface>
             )}
-            <View style={styles.bottomContainer} width='100%' justifyContent='space-between'
+            <View style={styles.bottomContainer}
             >
-                <View justifyContent="space-between">
+                <View style={styles.totalWrap}>
                     <Text style={styles.price}>$ {total.toFixed(2)}</Text>
                 </View>
-                <View justifyContent="space-between">
+                <View style={styles.actionWrap}>
                     <Button
-                        alignItems="center"
-                        buttonColor="red"
+                        mode="contained"
+                        buttonColor={colors.danger}
                         onPress={() => dispatch(clearCart())} >Clear</Button>
                 </View>
-                <View justifyContent="space-between">
+                <View style={styles.actionWrap}>
 
                     <Button
-                        alignItems="center"
-                        buttonColor="green"
+                        mode="contained"
+                        buttonColor={colors.success}
                         onPress={() => navigation.navigate('Checkout')}>Check Out</Button>
                 </View>
 
@@ -108,33 +109,70 @@ const styles = StyleSheet.create({
         height: height,
         alignItems: "center",
         justifyContent: "center",
+        backgroundColor: colors.background,
+    },
+    emptyText: {
+        color: colors.muted,
+        fontSize: 16,
     },
     bottomContainer: {
         flexDirection: 'row',
         position: 'absolute',
         bottom: 0,
         left: 0,
-        backgroundColor: 'white',
-        elevation: 20
+        right: 0,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        backgroundColor: colors.surface,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        ...shadow,
     },
     price: {
         fontSize: 18,
         margin: 20,
-        color: 'red'
-    },
-    hiddenContainer: {
-        flex: 1,
-        justifyContent: 'flex-end',
-        flexDirection: 'row',
-        // width: 'lg'
+        color: colors.primary,
+        fontWeight: '800',
     },
     hiddenButton: {
-        backgroundColor: 'red',
+        backgroundColor: colors.danger,
         justifyContent: 'center',
         alignItems: 'flex-end',
         paddingRight: 25,
-        height: 70,
-        width: width / 1.2
+        height: 84,
+        width: width / 1.2,
+        borderRadius: radius.md,
+    },
+    listSurface: {
+        flex: 1,
+        width: '100%',
+        backgroundColor: colors.background,
+    },
+    card: {
+        marginHorizontal: spacing.md,
+        marginTop: spacing.md,
+        padding: spacing.md,
+        borderRadius: radius.lg,
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.border,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.md,
+        ...shadow,
+    },
+    itemName: {
+        flex: 1,
+        color: colors.text,
+        fontWeight: '700',
+    },
+    totalWrap: {
+        minWidth: 90,
+    },
+    actionWrap: {
+        marginLeft: spacing.sm,
     }
 });
 export default Cart

@@ -3,6 +3,7 @@ import { createStackNavigator } from "@react-navigation/stack"
 // import { Stack } from 'expo-router';
 import ProductContainer from '../Screens/Product/ProductContainer';
 import SingleProduct from '../Screens/Product/SingleProduct';
+import { colors } from '../Shared/theme';
 
 const Stack = createStackNavigator()
 function MyStack() {
@@ -20,6 +21,14 @@ function MyStack() {
                 component={SingleProduct}
                 options={{
                     headerShown: true,
+                    title: 'Product detail',
+                    headerStyle: {
+                        backgroundColor: colors.surface,
+                    },
+                    headerTintColor: colors.text,
+                    headerTitleStyle: {
+                        fontWeight: '700',
+                    },
                 }}
             />
 

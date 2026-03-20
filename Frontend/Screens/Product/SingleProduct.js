@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Image, View, StyleSheet, Text, ScrollView, Button } from "react-native";
 import { Surface, } from "react-native-paper";
+import { colors, radius, shadow, spacing } from "../../Shared/theme";
 
 const SingleProduct = ({ route }) => {
     console.log(route)
@@ -9,8 +10,8 @@ const SingleProduct = ({ route }) => {
 
     return (
         <Surface style={styles.container}>
-            <ScrollView style={{ marginBottom: 80, padding: 5 }}>
-                <View>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                <View style={styles.heroWrap}>
                     <Image
                         source={{
                             uri: item.image ? item.image : 'https://cdn.pixabay.com/photo/2012/04/01/17/29/box-23649_960_720.png'
@@ -24,9 +25,8 @@ const SingleProduct = ({ route }) => {
                     <Text style={styles.contentHeader} size='xl'>{item.name}</Text>
                     <Text style={styles.contentText}>{item.brand}</Text>
                 </View>
-                <View style={styles.availabilityContainer}>
-
-                    <Text>{item.description}</Text>
+                <View style={styles.detailCard}>
+                    <Text style={styles.description}>{item.description}</Text>
                 </View>
             </ScrollView>
         </Surface>
@@ -35,51 +35,53 @@ const SingleProduct = ({ route }) => {
 
 const styles = StyleSheet.create({
     container: {
-        position: 'relative',
         height: '100%'
     },
-    imageContainer: {
-        backgroundColor: 'white',
-        padding: 0,
-        margin: 0
+    scrollContent: {
+        padding: spacing.lg,
+        paddingBottom: 40,
+        backgroundColor: colors.background,
+    },
+    heroWrap: {
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        ...shadow,
+        overflow: 'hidden',
     },
     image: {
         width: '100%',
-        height: 250
+        height: 280,
     },
     contentContainer: {
-        marginTop: 20,
+        marginTop: spacing.lg,
         justifyContent: 'center',
         alignItems: 'center'
     },
     contentHeader: {
         fontWeight: 'bold',
-        marginBottom: 20
+        fontSize: 24,
+        color: colors.text,
+        marginBottom: spacing.xs,
     },
     contentText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 20
+        fontSize: 15,
+        fontWeight: '700',
+        color: colors.muted,
+        marginBottom: spacing.md
     },
-    bottomContainer: {
-        flexDirection: 'row',
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        backgroundColor: 'white'
+    detailCard: {
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        padding: spacing.lg,
+        ...shadow,
     },
-    price: {
-        fontSize: 24,
-        margin: 20,
-        color: 'red'
-    },
-    availabilityContainer: {
-        marginBottom: 20,
-        alignItems: "center"
-    },
-    availability: {
-        flexDirection: 'row',
-        marginBottom: 10,
+    description: {
+        color: colors.text,
+        lineHeight: 22,
     }
 })
 

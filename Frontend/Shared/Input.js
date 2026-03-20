@@ -1,11 +1,13 @@
 import React from 'react';
 import { TextInput, StyleSheet } from 'react-native'
+import { colors, radius, spacing } from './theme';
 
 const Input = (props) => {
     return (
         <TextInput
             style={styles.input}
             placeholder={props.placeholder}
+            placeholderTextColor={colors.muted}
             name={props.name}
             id={props.id}
             value={props.value}
@@ -21,14 +23,15 @@ const Input = (props) => {
 
 const styles = StyleSheet.create({
     input: {
-        width: '80%',
-        height: 60,
-        backgroundColor: 'white',
-        margin: 10,
-        borderRadius: 20,
-        padding: 10,
-        borderWidth: 2,
-        borderColor: 'orange'
+        width: '100%',
+        minHeight: 56,
+        backgroundColor: colors.surface,
+        marginVertical: spacing.sm,
+        borderRadius: radius.md,
+        paddingHorizontal: spacing.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        color: colors.text,
     },
 });
 

@@ -1,28 +1,48 @@
 import React from 'react';
-import { ScrollView, Dimensions, StyleSheet, Text } from 'react-native';
-
-var { width } = Dimensions.get('window');
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { colors, radius, spacing } from './theme';
 
 const FormContainer = ({children, title}) => {
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <Text style={styles.title}>{title}</Text>
-            {children}
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
+            {title ? <Text style={styles.title}>{title}</Text> : null}
+            <View style={styles.card}>
+                {children}
+            </View>
         </ScrollView>
     )
 }
 
 const styles = StyleSheet.create({
+    scroll: {
+        flex: 1,
+        backgroundColor: colors.background,
+    },
     container: {
-        marginTop: 100,
-        marginBottom: 400,
-        width: width,
+        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.xl,
         justifyContent: 'center',
         alignItems: 'center'
     },
     title: {
-        fontSize: 30,
-    }
+        width: '100%',
+        fontSize: 28,
+        fontWeight: '800',
+        color: colors.text,
+        marginBottom: spacing.lg,
+        paddingHorizontal: spacing.xs,
+    },
+    card: {
+        width: '100%',
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
+        padding: spacing.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    helper: {
+        width: '100%',
+    },
 })
 
 export default FormContainer;

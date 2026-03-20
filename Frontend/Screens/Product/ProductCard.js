@@ -12,6 +12,7 @@ var { width, height } = Dimensions.get("window");
 import { addToCart } from '../../Redux/Actions/cartActions'
 import { useDispatch } from 'react-redux'
 import Toast from 'react-native-toast-message'
+import { colors, radius, shadow, spacing } from '../../Shared/theme';
 
 const ProductCard = (props) => {
     const { name, price, image, countInStock } = props;
@@ -28,6 +29,7 @@ const ProductCard = (props) => {
                 }}
             />
             <View style={styles.card} />
+            <Text style={styles.brand}>{props.brand}</Text>
             <Text style={styles.title}>
                 {name.length > 15 ? name.substring(0, 15 - 3)
                     + '...' : name
@@ -36,7 +38,7 @@ const ProductCard = (props) => {
             <Text style={styles.price}>${price}</Text>
 
             {countInStock > 0 ? (
-                <View style={{ marginBottom: 60 }}>
+                <View style={styles.buttonWrap}>
                     <Button title={'Add'} color={'green'}
                         onPress={() => {
                             dispatch(addToCart({ ...props, quantity: 1, })),
@@ -56,39 +58,53 @@ const ProductCard = (props) => {
 
 const styles = StyleSheet.create({
     container: {
-        width: width / 2 - 20,
-        height: width / 1.7,
-        padding: 10,
-        borderRadius: 10,
-        marginTop: 55,
-        marginBottom: 5,
-        marginLeft: 10,
+        width: '100%',
+        minHeight: width / 1.62,
+        paddingHorizontal: spacing.sm,
+        paddingTop: spacing.lg,
+        paddingBottom: spacing.md,
+        borderRadius: radius.lg,
+        marginTop: 20,
+        marginBottom: spacing.md,
         alignItems: 'center',
-        elevation: 8,
-        backgroundColor: 'white'
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.border,
+        ...shadow,
     },
     image: {
-        width: width / 2 - 20 - 10,
-        height: width / 2 - 20 - 30,
+        width: '72%',
+        height: width / 3.9,
         backgroundColor: 'transparent',
         position: 'absolute',
-        top: -45
+        top: -18,
     },
     card: {
-        marginBottom: 10,
-        height: width / 2 - 20 - 90,
+        marginBottom: 8,
+        height: width / 2 - 20 - 100,
         backgroundColor: 'transparent',
-        width: width / 2 - 20 - 10
+        width: '100%'
+    },
+    brand: {
+        marginTop: 88,
+        color: colors.muted,
+        fontSize: 12,
+        textTransform: 'uppercase',
+        letterSpacing: 0.4,
     },
     title: {
         fontWeight: "bold",
-        fontSize: 14,
+        fontSize: 15,
         textAlign: 'center'
     },
     price: {
-        fontSize: 20,
-        color: 'orange',
-        marginTop: 10
+        fontSize: 18,
+        color: colors.accent,
+        marginTop: 8,
+        fontWeight: '800',
+    },
+    buttonWrap: {
+        marginBottom: 24,
     }
 })
 

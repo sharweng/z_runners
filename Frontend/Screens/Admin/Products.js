@@ -22,6 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 var { height, width } = Dimensions.get("window")
 import EasyButton from "../../Shared/StyledComponents/EasyButton";
 import { useNavigation } from "@react-navigation/native"
+import { colors, radius, spacing } from "../../Shared/theme";
 const Products = (props) => {
 
     const [productList, setProductList] = useState([]);
@@ -149,6 +150,7 @@ const Products = (props) => {
                 placeholder="Search"
                 onChangeText={(text) => searchProduct(text)}
             //   value={searchQuery}
+                style={styles.searchbar}
             />
             {loading ? (
                 <View style={styles.spinner}>
@@ -180,7 +182,9 @@ const styles = StyleSheet.create({
     listHeader: {
         flexDirection: 'row',
         padding: 5,
-        backgroundColor: 'gainsboro'
+        backgroundColor: colors.surfaceSoft,
+        borderTopLeftRadius: radius.md,
+        borderTopRightRadius: radius.md,
     },
     headerItem: {
         margin: 3,
@@ -203,6 +207,10 @@ const styles = StyleSheet.create({
     buttonText: {
         marginLeft: 4,
         color: 'white'
+    },
+    searchbar: {
+        marginHorizontal: spacing.lg,
+        marginBottom: spacing.md,
     }
 })
 

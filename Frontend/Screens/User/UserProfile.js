@@ -10,6 +10,7 @@ import baseURL from "../../constants/baseurl"
 
 import AuthGlobal from "../../Context/Store/AuthGlobal"
 import { logoutUser } from "../../Context/Actions/Auth.actions"
+import { colors, radius, shadow, spacing } from "../../Shared/theme";
 
 
 const UserProfile = (props) => {
@@ -45,19 +46,19 @@ const UserProfile = (props) => {
     return (
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.subContainer}>
-                <Text style={{ fontSize: 30 }}>
+                <Text style={styles.name}>
                     {userProfile ? userProfile.name : ""}
                 </Text>
-                <View style={{ marginTop: 20 }}>
-                    <Text style={{ margin: 10 }}>
+                <View style={styles.card}>
+                    <Text style={styles.info}>
                         Email: {userProfile ? userProfile.email : ""}
                     </Text>
-                    <Text style={{ margin: 10 }}>
+                    <Text style={styles.info}>
                         Phone: {userProfile ? userProfile.phone : ""}
                     </Text>
                 </View>
-                <View style={{ marginTop: 80 }}>
-                    <Button title={"Sign Out"} onPress={() => [
+                <View style={styles.buttonWrap}>
+                    <Button color={colors.danger} title={"Sign Out"} onPress={() => [
                         AsyncStorage.removeItem("jwt"),
                         logoutUser(context.dispatch)
                     ]} />
@@ -71,16 +72,38 @@ const UserProfile = (props) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        alignItems: "center"
+        alignItems: "center",
+        backgroundColor: colors.background,
     },
     subContainer: {
         alignItems: "center",
-        marginTop: 60
+        paddingTop: spacing.xl,
+        paddingHorizontal: spacing.lg,
+        width: '100%',
     },
-    order: {
-        marginTop: 20,
+    name: {
+        fontSize: 28,
+        fontWeight: '800',
+        color: colors.text,
+        marginBottom: spacing.lg,
+    },
+    card: {
+        width: '100%',
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        padding: spacing.lg,
+        ...shadow,
+    },
+    info: {
+        marginVertical: spacing.sm,
+        color: colors.text,
+        fontSize: 15,
+    },
+    buttonWrap: {
+        marginTop: 40,
         alignItems: "center",
-        marginBottom: 60
     }
 })
 

@@ -1,4 +1,5 @@
 import styled, { css } from "styled-components/native";
+import { colors } from "../theme";
 
 const TrafficLight = styled.View`
   border-radius: 50px;
@@ -9,19 +10,19 @@ const TrafficLight = styled.View`
   ${(props) =>
     props.available &&
     css`
-      background: #afec1a;
+      background: ${colors.success};
     `}
 
   ${(props) =>
     props.limited &&
     css`
-      background: #ffe033;
+      background: ${colors.warning};
     `}
 
     ${(props) =>
     props.unavailable &&
     css`
-      background: #ec241a;
+      background: ${colors.danger};
     `}
 `;
 

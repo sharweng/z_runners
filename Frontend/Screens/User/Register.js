@@ -15,6 +15,7 @@ import mime from "mime";
 
 import * as ImagePicker from "expo-image-picker"
 import * as Location from 'expo-location';
+import { colors, radius, shadow, spacing } from "../../Shared/theme";
 var { height, width } = Dimensions.get("window")
 
 const Register = (props) => {
@@ -156,7 +157,7 @@ const Register = (props) => {
             extraHeight={200}
             enableOnAndroid={true}
         >
-            <FormContainer title={"Register"}>
+            <FormContainer title={"Create account"}>
 
                 <View style={styles.imageContainer}>
                     <Image style={styles.image} source={{ uri: mainImage }} />
@@ -200,7 +201,7 @@ const Register = (props) => {
                     <Button
                         title="Register"
                         onPress={() => register()}
-                        style={{ color: "blue" }}
+                        color={colors.accent}
                     />
                 </View>
                 {/* <View>
@@ -224,7 +225,7 @@ const Register = (props) => {
 
 const styles = StyleSheet.create({
     buttonGroup: {
-        width: "80%",
+        width: "100%",
         margin: 10,
         alignItems: "center",
     },
@@ -238,12 +239,13 @@ const styles = StyleSheet.create({
         width: 200,
         height: 200,
         borderStyle: "solid",
-        borderWidth: 8,
+        borderWidth: 1,
         padding: 0,
         justifyContent: "center",
         borderRadius: 100,
-        borderColor: "#E0E0E0",
-        elevation: 10
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        ...shadow,
     },
     image: {
         width: "100%",
@@ -254,7 +256,7 @@ const styles = StyleSheet.create({
         position: "absolute",
         right: 5,
         bottom: 5,
-        backgroundColor: "grey",
+        backgroundColor: colors.primary,
         padding: 8,
         borderRadius: 100,
         elevation: 20

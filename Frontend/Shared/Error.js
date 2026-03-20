@@ -1,5 +1,6 @@
 import React from "react"
 import { StyleSheet, View, Text } from 'react-native'
+import { colors, radius, spacing } from './theme'
 
 const Error = (props) => {
     return (
@@ -13,10 +14,16 @@ const styles = StyleSheet.create({
     container: {
         width: '100%',
         alignItems: 'center',
-        margin: 10
+        marginVertical: spacing.sm,
+        padding: spacing.md,
+        borderRadius: radius.md,
+        backgroundColor: '#FDECEC',
+        borderWidth: 1,
+        borderColor: '#F4C2C2',
     },
     text: {
-        color: 'red'
+        color: colors.danger,
+        fontWeight: '700',
     }
 })
 

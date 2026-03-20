@@ -3,6 +3,7 @@ import { StyleSheet } from "react-native";
 
 import { useSelector, } from 'react-redux'
 import { Badge, Text } from 'react-native-paper';
+import { colors } from "./theme";
 
 
 
@@ -21,18 +22,17 @@ const CartIcon = (props) => {
 
 const styles = StyleSheet.create({
   badge: {
-    width: 20,
+    minWidth: 18,
     position: "absolute",
-    flex: 1,
+    backgroundColor: colors.danger,
     justifyContent: "center",
     alignItems: "center",
     alignContent: "center",
-    top: -2,
-    right: -8,
+    top: -6,
+    right: -10,
   },
   text: {
-    fontSize: 12,
-    width: 100,
+    fontSize: 11,
     fontWeight: "bold",
     color: "white"
 

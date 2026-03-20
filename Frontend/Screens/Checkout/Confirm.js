@@ -12,6 +12,7 @@ import AuthGlobal from '../../Context/Store/AuthGlobal';
 var { width, height } = Dimensions.get("window");
 import Toast from 'react-native-toast-message';
 import { clearCart } from '../../Redux/Actions/cartActions';
+import { colors, radius, shadow, spacing } from '../../Shared/theme';
 const Confirm = (props) => {
     const context = useContext(AuthGlobal)
     const [token, setToken] = useState();
@@ -63,14 +64,14 @@ const Confirm = (props) => {
 
 
     return (
-        <Surface>
+        <Surface style={styles.surface}>
             <ScrollView contentContainerStyle={styles.container}>
                 <View style={styles.titleContainer}>
-                    <Text style={{ fontSize: 20, fontWeight: "bold" }}>Confirm Order</Text>
+                    <Text style={styles.title}>Confirm Order</Text>
                     {props.route.params ? (
-                        <View style={{ borderWidth: 1, borderColor: "orange" }}>
+                        <View style={styles.card}>
                             <Text style={styles.title}>Shipping to:</Text>
-                            <View style={{ padding: 8 }}>
+                            <View style={styles.cardBody}>
                                 <Text>Address: {finalOrder.order.order.shippingAddress1}</Text>
                                 <Text>Address2: {finalOrder.order.order.shippingAddress2}</Text>
                                 <Text>City: {finalOrder.order.order.city}</Text>
@@ -81,19 +82,19 @@ const Confirm = (props) => {
 
                             {finalOrder.order.order.orderItems.map((item) => {
                                 return (
-                                    <Surface bg="white" key={item.id}>
+                                    <Surface key={item.id} style={styles.itemCard}>
 
                                         <Avatar.Image size={48} source={{
                                             uri: item.image ?
                                                 item.image : 'https://cdn.pixabay.com/photo/2012/04/01/17/29/box-23649_960_720.png'
                                         }} />
 
-                                        <Text>
+                                        <Text style={styles.itemName}>
                                             {item.name}
                                         </Text>
 
                                         <Divider />
-                                        <Text fontSize="xs" color="coolGray.800" alignSelf="flex-start">
+                                        <Text style={styles.itemPrice}>
                                             $ {item.price}
                                         </Text>
 
@@ -105,6 +106,7 @@ const Confirm = (props) => {
                     ) : null}
                     <View style={{ alignItems: "center", margin: 20 }}>
                         <Button
+                            color={colors.primary}
                             title={"Place order"}
                             onPress={confirmOrder}
                         />
@@ -116,12 +118,15 @@ const Confirm = (props) => {
 
 }
 const styles = StyleSheet.create({
+    surface: {
+        flex: 1,
+        backgroundColor: colors.background,
+    },
     container: {
-        height: height,
-
-        padding: 8,
+        minHeight: height,
+        padding: spacing.lg,
         alignContent: "center",
-        backgroundColor: "white",
+        backgroundColor: colors.background,
     },
     titleContainer: {
         justifyContent: "center",
@@ -131,21 +136,39 @@ const styles = StyleSheet.create({
     title: {
         alignSelf: "center",
         margin: 8,
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: "bold",
+        color: colors.text,
     },
-    listItem: {
-        alignItems: "center",
-        backgroundColor: "white",
-        justifyContent: "center",
-        width: width / 1.2,
-
+    card: {
+        width: width / 1.05,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        padding: spacing.md,
+        ...shadow,
     },
-    body: {
+    cardBody: {
         margin: 10,
         alignItems: "center",
-        flexDirection: "row",
+        flexDirection: "column",
         width: "90%",
+    },
+    itemCard: {
+        marginTop: spacing.md,
+        padding: spacing.md,
+        borderRadius: radius.md,
+        backgroundColor: colors.surfaceSoft,
+    },
+    itemName: {
+        fontWeight: '700',
+        color: colors.text,
+        marginTop: spacing.sm,
+    },
+    itemPrice: {
+        color: colors.primary,
+        fontWeight: '700',
     },
 });
 export default Confirm;

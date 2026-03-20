@@ -8,6 +8,7 @@ import {
     StyleSheet
 } from "react-native"
 import EasyButton from "../../Shared/StyledComponents/EasyButton";
+import { colors, radius, shadow, spacing } from "../../Shared/theme";
 import baseURL from "../../constants/baseurl";
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -90,8 +91,8 @@ const Categories = (props) => {
     }
 
     return (
-        <View style={{ position: "relative", height: "100%" }}>
-            <View style={{ marginBottom: 60 }}>
+        <View style={styles.container}>
+            <View style={{ marginBottom: 96 }}>
                 <FlatList
                     data={categories}
                     renderItem={({ item, index }) => (
@@ -102,7 +103,7 @@ const Categories = (props) => {
             </View>
             <View style={styles.bottomBar}>
                 <View>
-                    <Text>Add Category</Text>
+                    <Text style={styles.bottomTitle}>Add Category</Text>
                 </View>
                 <View style={{ width: width / 2.5 }}>
                     <TextInput
@@ -126,11 +127,15 @@ const Categories = (props) => {
 }
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: colors.background,
+    },
     bottomBar: {
-        backgroundColor: "white",
+        backgroundColor: colors.surface,
         width: width,
-        height: 60,
-        padding: 2,
+        height: 72,
+        paddingHorizontal: spacing.sm,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
@@ -138,27 +143,30 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0
     },
+    bottomTitle: {
+        fontWeight: '700',
+        color: colors.text,
+    },
     input: {
-        height: 40,
-        borderColor: "gray",
-        borderWidth: 1
+        height: 44,
+        borderColor: colors.border,
+        borderWidth: 1,
+        borderRadius: radius.md,
+        paddingHorizontal: spacing.sm,
+        backgroundColor: colors.surfaceSoft,
     },
     item: {
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.2,
-        shadowRadius: 1,
-        elevation: 1,
-        padding: 5,
-        margin: 5,
-        backgroundColor: "white",
+        padding: spacing.md,
+        marginHorizontal: spacing.md,
+        marginTop: spacing.sm,
+        backgroundColor: colors.surface,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        borderRadius: 5
+        borderRadius: radius.md,
+        borderWidth: 1,
+        borderColor: colors.border,
+        ...shadow,
     }
 })
 
