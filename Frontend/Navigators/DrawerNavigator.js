@@ -9,27 +9,14 @@ import Main from "./Main";
 
 import DrawerContent from "../Shared/DrawerContent";
 import { colors } from "../Shared/theme";
-import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { TouchableOpacity, Text, StyleSheet } from "react-native";
 
 const NativeDrawer = createDrawerNavigator();
 const DrawerNavigator = () => {
-  const navigation = useNavigation();
-
-  const openSearch = () => {
-    navigation.navigate('Zone Runners', {
-      screen: 'Home',
-      params: {
-        screen: 'Main',
-        params: { openSearch: true },
-      },
-    });
-  };
-
   return (
 
     <NativeDrawer.Navigator
-      screenOptions={{
+      screenOptions={({ navigation }) => ({
         drawerStyle: {
           width: '72%',
           backgroundColor: colors.surface,
@@ -49,11 +36,23 @@ const DrawerNavigator = () => {
           </TouchableOpacity>
         ),
         headerRight: () => (
-          <TouchableOpacity onPress={openSearch} style={styles.searchButton} activeOpacity={0.85}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('Zone Runners', {
+                screen: 'Home',
+                params: {
+                  screen: 'Main',
+                  params: { openSearch: true },
+                },
+              })
+            }
+            style={styles.searchButton}
+            activeOpacity={0.85}
+          >
             <MaterialCommunityIcons name="magnify" size={26} color={colors.text} />
           </TouchableOpacity>
         ),
-      }}
+      })}
 
       drawerContent={(props) => <DrawerContent {...props} />}>
       <NativeDrawer.Screen name="Zone Runners" component={Main} options={{ title: '' }} />

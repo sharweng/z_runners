@@ -114,10 +114,27 @@ const ProductForm = (props) => {
             countInStock === ""
         ) {
             setError("Please fill in the form correctly")
+            return;
+        }
+
+        if (!item && !image) {
+            setError("Please select a product image")
+            return;
+        }
+
+        if (!token) {
+            Toast.show({
+                topOffset: 60,
+                type: "error",
+                text1: "Session expired",
+                text2: "Please login again"
+            });
+            navigation.navigate("Login");
+            return;
         }
 
         let formData = new FormData();
-        const newImageUri = "file:///" + image.split("file:/").join("");
+        const newImageUri = image?.startsWith("file://") ? image : `file:///${image.split("file:/").join("")}`;
 
         formData.append("name", name);
         formData.append("brand", brand);
@@ -129,11 +146,13 @@ const ProductForm = (props) => {
         formData.append("rating", rating);
         formData.append("numReviews", numReviews);
         formData.append("isFeatured", isFeatured);
-        formData.append("image", {
-            uri: newImageUri,
-            type: mime.getType(newImageUri),
-            name: newImageUri.split("/").pop()
-        });
+        if (image) {
+            formData.append("image", {
+                uri: newImageUri,
+                type: mime.getType(newImageUri),
+                name: newImageUri.split("/").pop()
+            });
+        }
 
         const config = {
             headers: {
@@ -160,11 +179,12 @@ const ProductForm = (props) => {
                     }
                 })
                 .catch((error) => {
+                    const msg = error?.response?.data?.message;
                     Toast.show({
                         topOffset: 60,
                         type: "error",
                         text1: "Something went wrong",
-                        text2: "Please try again"
+                        text2: msg || "Please try again"
                     })
                 })
         } else {
@@ -184,12 +204,24 @@ const ProductForm = (props) => {
                     }
                 })
                 .catch((error) => {
+                    const msg = error?.response?.data?.message;
+                    if (error?.response?.status === 401) {
+                        Toast.show({
+                            topOffset: 60,
+                            type: "error",
+                            text1: "Not authorized",
+                            text2: "Please login again"
+                        });
+                        navigation.navigate("Login");
+                        return;
+                    }
+
                     console.log(error)
                     Toast.show({
                         topOffset: 60,
                         type: "error",
                         text1: "Something went wrong",
-                        text2: "Please try again"
+                        text2: msg || "Please try again"
                     })
                 })
 

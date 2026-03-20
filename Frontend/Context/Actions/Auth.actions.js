@@ -18,7 +18,7 @@ export const loginUser = (user, dispatch) => {
     })
     .then((res) => res.json())
     .then((data) => {
-        if (data) {
+        if (data?.token) {
             // console.log(data)
             const token = data.token;
             AsyncStorage.setItem("jwt", token)
@@ -26,6 +26,12 @@ export const loginUser = (user, dispatch) => {
             console.log("token",token)
             dispatch(setCurrentUser(decoded, user))
         } else {
+           Toast.show({
+               topOffset: 60,
+               type: "error",
+               text1: "Please provide correct credentials",
+               text2: ""
+           });
            logoutUser(dispatch)
         }
     })
