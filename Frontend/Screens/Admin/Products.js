@@ -16,21 +16,21 @@ import { useFocusEffect } from "@react-navigation/native"
 import { Searchbar } from 'react-native-paper';
 import ListItem from "./ListItem"
 
-import axios from "axios"
-import baseURL from "../../constants/baseurl";
 import AsyncStorage from '@react-native-async-storage/async-storage'
 var { height, width } = Dimensions.get("window")
 import EasyButton from "../../Shared/StyledComponents/EasyButton";
 import { useNavigation } from "@react-navigation/native"
 import { colors, radius, spacing } from "../../Shared/theme";
+import { useDispatch, useSelector } from 'react-redux';
+import { deleteProduct as deleteProductAction, fetchProducts } from '../../Redux/Actions/productActions';
 const Products = (props) => {
 
-    const [productList, setProductList] = useState([]);
     const [productFilter, setProductFilter] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [token, setToken] = useState();
     const navigation = useNavigation()
     const [refreshing, setRefreshing] = useState(false);
+    const dispatch = useDispatch();
+    const { items: productList, loading } = useSelector((state) => state.products);
     const ListHeader = () => {
         return (
             <View
@@ -64,32 +64,15 @@ const Products = (props) => {
         )
     }
 
-    const deleteProduct = (id) => {
-        axios
-            .delete(`${baseURL}products/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            })
-            .then((res) => {
-                const products = productFilter.filter((item) => item.id !== id)
-                setProductFilter(products)
-            })
-            .catch((error) => console.log(error));
+    const handleDeleteProduct = (id) => {
+        dispatch(deleteProductAction(id, token)).catch((error) => console.log(error));
     }
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
-        setTimeout(() => {
-            axios
-                .get(`${baseURL}products`)
-                .then((res) => {
-                    // console.log(res.data)
-                    setProductList(res.data);
-                    setProductFilter(res.data);
-                    setLoading(false);
-                })
-            setRefreshing(false);
-        }, 2000);
-    }, []);
+        dispatch(fetchProducts())
+            .finally(() => setRefreshing(false));
+    }, [dispatch]);
 
     useFocusEffect(
         useCallback(
@@ -100,24 +83,20 @@ const Products = (props) => {
                         setToken(res)
                     })
                     .catch((error) => console.log(error))
-                axios
-                    .get(`${baseURL}products`)
-                    .then((res) => {
-                        console.log(res.data)
-                        setProductList(res.data);
-                        setProductFilter(res.data);
-                        setLoading(false);
-                    })
+                dispatch(fetchProducts())
+                    .catch((error) => console.log(error));
 
                 return () => {
-                    setProductList();
                     setProductFilter();
-                    setLoading(true);
                 }
             },
-            [],
+            [dispatch],
         )
     )
+
+    React.useEffect(() => {
+        setProductFilter(productList || []);
+    }, [productList]);
     return (
         <View flex={1}>
             <View style={styles.buttonContainer}>
@@ -166,7 +145,7 @@ const Products = (props) => {
                     <ListItem
                         item={item}
                         index={index}
-                        deleteProduct={deleteProduct}
+                        deleteProduct={handleDeleteProduct}
 
                     />
                 )}

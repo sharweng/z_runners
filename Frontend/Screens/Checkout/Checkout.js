@@ -14,6 +14,7 @@ const countries = require("../../data/countries.json");
 import AuthGlobal from '../../Context/Store/AuthGlobal'
 import Toast from 'react-native-toast-message'
 import { colors, spacing } from '../../Shared/theme'
+import { replaceSavedCartItems } from '../Cart/cartStorage';
 const Checkout = (props) => {
     const [user, setUser] = useState('')
     const [orderItems, setOrderItems] = useState([])
@@ -46,8 +47,9 @@ const Checkout = (props) => {
         }
     }, [])
 
-    const checkOut = () => {
+    const checkOut = async () => {
         console.log("orders", orderItems)
+        await replaceSavedCartItems(orderItems);
         let order = {
             city,
             country,
@@ -56,7 +58,7 @@ const Checkout = (props) => {
             phone,
             shippingAddress1: address,
             shippingAddress2: address2,
-            status: "3",
+            status: "pending",
             user,
             zip,
         }

@@ -59,6 +59,24 @@ const Register = (props) => {
         console.log(`${baseURL}users/register`)
         if (email === "" || name === "" || phone === "" || password === "") {
             setError("Please fill in the form correctly");
+            Toast.show({
+                topOffset: 60,
+                type: "error",
+                text1: "Missing required fields",
+                text2: "Please complete name, email, phone and password.",
+            });
+            return;
+        }
+
+        if (!image) {
+            setError("Please add a profile photo");
+            Toast.show({
+                topOffset: 60,
+                type: "error",
+                text1: "Profile photo required",
+                text2: "Take or upload a photo before registering.",
+            });
+            return;
         }
 
         let formData = new FormData();

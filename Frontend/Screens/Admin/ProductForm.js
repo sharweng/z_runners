@@ -17,14 +17,15 @@ import EasyButton from "../../Shared/StyledComponents/EasyButton"
 
 import Toast from "react-native-toast-message"
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import baseURL from "../../constants/baseurl"
 import Error from "../../Shared/Error"
-import axios from "axios"
 import * as ImagePicker from "expo-image-picker"
-import { useFocusEffect, useNavigation } from "@react-navigation/native"
+import { useNavigation } from "@react-navigation/native"
 import mime from "mime";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radius, shadow, spacing } from "../../Shared/theme";
+import { useDispatch, useSelector } from 'react-redux';
+import { createProduct, updateProduct } from '../../Redux/Actions/productActions';
+import { fetchCategories } from '../../Redux/Actions/categoryActions';
 
 
 const ProductForm = (props) => {
@@ -37,7 +38,6 @@ const ProductForm = (props) => {
     const [image, setImage] = useState('');
     const [mainImage, setMainImage] = useState();
     const [category, setCategory] = useState('');
-    const [categories, setCategories] = useState([]);
     const [token, setToken] = useState();
     const [error, setError] = useState();
     const [countInStock, setCountInStock] = useState();
@@ -48,6 +48,8 @@ const ProductForm = (props) => {
     const [item, setItem] = useState(null);
 
     let navigation = useNavigation()
+    const dispatch = useDispatch();
+    const { items: categories } = useSelector((state) => state.categories);
 
     useEffect(() => {
         if (!props.route.params) {
@@ -69,10 +71,8 @@ const ProductForm = (props) => {
                 setToken(res)
             })
             .catch((error) => console.log(error))
-        axios
-            .get(`${baseURL}categories`)
-            .then((res) => setCategories(res.data))
-            .catch((error) => alert("Error to load categories"));
+        dispatch(fetchCategories())
+            .catch(() => alert("Error to load categories"));
         (async () => {
             if (Platform.OS !== "web") {
                 const {
@@ -83,10 +83,7 @@ const ProductForm = (props) => {
                 }
             }
         })();
-        return () => {
-            setCategories([])
-        }
-    }, [])
+    }, [dispatch])
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -154,29 +151,18 @@ const ProductForm = (props) => {
             });
         }
 
-        const config = {
-            headers: {
-                "Content-Type": "multipart/form-data",
-                "Authorization": `Bearer ${token}`
-            }
-        }
         if (item !== null) {
-            console.log(item)
-            axios
-                .put(`${baseURL}products/${item.id}`, formData, config)
-                .then((res) => {
-
-                    if (res.status === 200 || res.status === 201) {
-                        Toast.show({
-                            topOffset: 60,
-                            type: "success",
-                            text1: "Product successfuly updated",
-                            text2: ""
-                        });
-                        setTimeout(() => {
-                            navigation.navigate("Products");
-                        }, 500)
-                    }
+            dispatch(updateProduct(item.id, formData, token))
+                .then(() => {
+                    Toast.show({
+                        topOffset: 60,
+                        type: "success",
+                        text1: "Product successfuly updated",
+                        text2: ""
+                    });
+                    setTimeout(() => {
+                        navigation.navigate("Products");
+                    }, 500)
                 })
                 .catch((error) => {
                     const msg = error?.response?.data?.message;
@@ -188,20 +174,17 @@ const ProductForm = (props) => {
                     })
                 })
         } else {
-            axios
-                .post(`${baseURL}products`, formData, config)
-                .then((res) => {
-                    if (res.status === 200 || res.status === 201) {
-                        Toast.show({
-                            topOffset: 60,
-                            type: "success",
-                            text1: "New Product added",
-                            text2: ""
-                        });
-                        setTimeout(() => {
-                            navigation.navigate("Products");
-                        }, 500)
-                    }
+            dispatch(createProduct(formData, token))
+                .then(() => {
+                    Toast.show({
+                        topOffset: 60,
+                        type: "success",
+                        text1: "New Product added",
+                        text2: ""
+                    });
+                    setTimeout(() => {
+                        navigation.navigate("Products");
+                    }, 500)
                 })
                 .catch((error) => {
                     const msg = error?.response?.data?.message;

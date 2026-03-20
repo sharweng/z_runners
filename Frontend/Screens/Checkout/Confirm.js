@@ -13,9 +13,9 @@ var { width, height } = Dimensions.get("window");
 import Toast from 'react-native-toast-message';
 import { clearCart } from '../../Redux/Actions/cartActions';
 import { colors, radius, shadow, spacing } from '../../Shared/theme';
+import { clearSavedCartItems } from '../Cart/cartStorage';
 const Confirm = (props) => {
     const context = useContext(AuthGlobal)
-    const [token, setToken] = useState();
     // const confirm = props.route.params;
     const finalOrder = props.route.params;
     console.log("order", finalOrder)
@@ -27,19 +27,17 @@ const Confirm = (props) => {
 
         AsyncStorage.getItem("jwt")
             .then((res) => {
-                setToken(res)
+                const config = {
+                    headers: {
+                        Authorization: `Bearer ${res}`
+                    }
+                }
 
+                return axios.post(`${baseURL}orders`, order, config)
             })
-            .catch((error) => console.log(error))
-        const config = {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        }
-        axios
-            .post(`${baseURL}orders`, order, config)
-            .then((res) => {
+            .then(async (res) => {
                 console.log(res.status)
+                await clearSavedCartItems();
                 Toast.show({
                     topOffset: 60,
                     type: "success",
@@ -50,8 +48,7 @@ const Confirm = (props) => {
                     dispatch(clearCart())
                     navigation.navigate('Cart Screen', { screen: 'Cart' })
                 }, 500);
-            }
-            )
+            })
             .catch((error) => {
                 Toast.show({
                     topOffset: 60,

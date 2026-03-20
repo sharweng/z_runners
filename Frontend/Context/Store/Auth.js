@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, userEffect, useState } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 // import "core-js/stable/atob";
 import { jwtDecode } from "jwt-decode"
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -16,14 +16,23 @@ const Auth = props => {
     const [showChild, setShowChild] = useState(false);
 
     useEffect(() => {
+        let isMounted = true;
+
         setShowChild(true);
-        if (AsyncStorage.jwt) {
-            const decoded = AsyncStorage.jwt ? AsyncStorage.jwt : "";
-            if (setShowChild) {
-                dispatch(setCurrentUser(jwtDecode(decoded)))
-            }
-        }
-        return () => setShowChild(false);
+        AsyncStorage.getItem("jwt")
+            .then((token) => {
+                if (token && isMounted) {
+                    dispatch(setCurrentUser(jwtDecode(token)))
+                }
+            })
+            .catch(() => {
+                // Ignore storage parsing errors and keep user logged out.
+            });
+
+        return () => {
+            isMounted = false;
+            setShowChild(false);
+        };
     }, [])
 
 

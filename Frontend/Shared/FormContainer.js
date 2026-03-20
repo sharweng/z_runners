@@ -4,7 +4,11 @@ import { colors, radius, spacing } from './theme';
 
 const FormContainer = ({children, title}) => {
     return (
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
+        <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.container}
+            keyboardShouldPersistTaps="handled"
+        >
             {title ? <Text style={styles.title}>{title}</Text> : null}
             <View style={styles.card}>
                 {children}
@@ -19,6 +23,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.background,
     },
     container: {
+        flexGrow: 1,
         paddingHorizontal: spacing.lg,
         paddingVertical: spacing.xl,
         justifyContent: 'center',

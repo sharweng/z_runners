@@ -7,10 +7,14 @@ import CartNavigator from "./CartNavigator";
 import CartIcon from "../Shared/CartIcon";
 import UserNavigator from "./UserNavigator";
 import AdminNavigator from "./AdminNavigator";
+import AuthGlobal from "../Context/Store/AuthGlobal";
 import { colors } from "../Shared/theme";
 const Tab = createBottomTabNavigator();
 
 const Main = () => {
+    const context = useContext(AuthGlobal);
+    const isAdmin = !!context?.stateUser?.user?.isAdmin;
+
     return (
         <Tab.Navigator
             initialRouteName="Home"
@@ -66,22 +70,24 @@ const Main = () => {
                 }}
             />
 
-            <Tab.Screen
-                name="Admin"
-                component={AdminNavigator}
-                options={{
-                    headerShown: false,
-                    tabBarIcon: ({ color }) => {
-                        return <Ionicons
-                            name="cog"
-                            style={{ position: "relative" }}
-                            color={color}
-                            size={26}
+            {isAdmin && (
+                <Tab.Screen
+                    name="Admin"
+                    component={AdminNavigator}
+                    options={{
+                        headerShown: false,
+                        tabBarIcon: ({ color }) => {
+                            return <Ionicons
+                                name="cog"
+                                style={{ position: "relative" }}
+                                color={color}
+                                size={26}
 
-                        />
-                    }
-                }}
-            />
+                            />
+                        }
+                    }}
+                />
+            )}
             <Tab.Screen
                 name="User"
                 component={UserNavigator}

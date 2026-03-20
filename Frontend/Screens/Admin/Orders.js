@@ -1,28 +1,29 @@
-import React, { useCallback, useState } from "react";
-import { View, Text, FlatList, StyleSheet } from 'react-native'
-import axios from 'axios'
-import baseURL from "../../constants/baseurl";
+import React, { useCallback } from "react";
+import { View, FlatList, StyleSheet } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import OrderCard from "../../Shared/OrderCard";
 import { colors, spacing } from "../../Shared/theme";
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchOrders } from '../../Redux/Actions/orderActions';
 const Orders = (props) => {
-    const [orderList, setOrderList] = useState()
+    const dispatch = useDispatch();
+    const { items: orderList } = useSelector((state) => state.orders);
 
     useFocusEffect(
         useCallback(
             () => {
                 getOrders();
                 return () => {
-                    setOrderList()
                 }
             }, [],
         )
     )
 
     const getOrders = () => {
-        axios.get(`${baseURL}orders`)
-            .then((res) => {
-                setOrderList(res.data)
+        AsyncStorage.getItem("jwt")
+            .then((token) => {
+                return dispatch(fetchOrders(token))
             })
             .catch((error) => console.log(error))
     }

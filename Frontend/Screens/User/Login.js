@@ -2,7 +2,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { View, Text, StyleSheet, Button } from 'react-native'
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import FormContainer from "../../Shared/FormContainer";
 
 import AuthGlobal from '../../Context/Store/AuthGlobal'
@@ -15,7 +14,6 @@ const Login = (props) => {
     const navigation = useNavigation()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [error, setError] = useState("")
     const handleSubmit = () => {
         const user = {
             email,
@@ -23,7 +21,7 @@ const Login = (props) => {
         };
 
         if (email === "" || password === "") {
-            setError("Please fill in your credentials");
+            return;
         } else {
             loginUser(user, context.dispatch);
             // console.log("error")
@@ -35,15 +33,6 @@ const Login = (props) => {
             navigation.navigate("User Profile")
         }
     }, [context.stateUser.isAuthenticated])
-
-    AsyncStorage.getAllKeys((err, keys) => {
-        AsyncStorage.multiGet(keys, (error, stores) => {
-            stores.map((result, i, store) => {
-                console.log({ [store[i][0]]: store[i][1] });
-                return true;
-            });
-        });
-    });
 
     return (
         <FormContainer title="Welcome back">

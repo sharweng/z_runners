@@ -8,55 +8,32 @@ import Toast from "react-native-toast-message";
 import { Picker } from "@react-native-picker/picker";
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import axios from "axios";
-import baseURL from "../constants/baseurl";
 import { useNavigation } from '@react-navigation/native'
 import { colors, radius, shadow, spacing } from "./theme";
+import { useDispatch } from 'react-redux';
+import { updateOrderStatus } from '../Redux/Actions/orderActions';
 
 const codes = [
-  { name: "pending", code: "3" },
-  { name: "shipped", code: "2" },
-  { name: "delivered", code: "1" },
+  { name: "pending", code: "pending" },
+  { name: "shipped", code: "shipped" },
+  { name: "delivered", code: "delivered" },
 ];
 const OrderCard = ({ item, update }) => {
   console.log(item)
   const [orderStatus, setOrderStatus] = useState('');
   const [statusText, setStatusText] = useState('');
-  const [statusChange, setStatusChange] = useState(item.status);
-  const [token, setToken] = useState('');
+  const [statusChange, setStatusChange] = useState(item.status === "ongoing" ? "pending" : item.status);
   const [cardColor, setCardColor] = useState('');
 
   const navigation = useNavigation()
+  const dispatch = useDispatch();
 
   const updateOrder = () => {
     AsyncStorage.getItem("jwt")
-      .then((res) => {
-        setToken(res);
+      .then((token) => {
+        return dispatch(updateOrderStatus(item.id, statusChange, token));
       })
-      .catch((error) => console.log(error));
-    const config = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
-    const order = {
-      city: item.city,
-      country: item.country,
-      dateOrdered: item.dateOrdered,
-      id: item.id,
-      orderItems: item.orderItems,
-      phone: item.phone,
-      shippingAddress1: item.shippingAddress1,
-      shippingAddress2: item.shippingAddress2,
-      status: statusChange,
-      // totalPrice: item.totalPrice,
-      user: item.user,
-      zip: item.zip,
-    };
-    axios
-      .put(`${baseURL}orders/${item.id}`, order, config)
-      .then((res) => {
-        if (res.status == 200 || res.status == 201) {
+      .then(() => {
           Toast.show({
             topOffset: 60,
             type: "success",
@@ -66,7 +43,6 @@ const OrderCard = ({ item, update }) => {
           setTimeout(() => {
             navigation.navigate("Products");
           }, 500);
-        }
       })
       .catch((error) => {
         Toast.show({
@@ -78,11 +54,11 @@ const OrderCard = ({ item, update }) => {
       });
   }
   useEffect(() => {
-    if (item.status == "3") {
+    if (item.status == "3" || item.status === "pending" || item.status === "ongoing") {
       setOrderStatus(<TrafficLight unavailable></TrafficLight>);
       setStatusText("pending");
       setCardColor("#E74C3C");
-    } else if (item.status == "2") {
+    } else if (item.status == "2" || item.status === "shipped") {
       setOrderStatus(<TrafficLight limited></TrafficLight>);
       setStatusText("shipped");
       setCardColor("#F1C40F");

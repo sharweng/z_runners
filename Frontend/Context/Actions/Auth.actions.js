@@ -7,16 +7,36 @@ import baseURL from "../../constants/baseurl"
 export const SET_CURRENT_USER = "SET_CURRENT_USER";
 
 export const loginUser = (user, dispatch) => {
-    
+    const normalizedUser = {
+        ...user,
+        email: (user.email || '').trim().toLowerCase(),
+    };
+
     fetch(`${baseURL}users/login`, {
         method: "POST",
-        body: JSON.stringify(user),
+        body: JSON.stringify(normalizedUser),
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
         },
     })
-    .then((res) => res.json())
+    .then(async (res) => {
+        const raw = await res.text();
+        let data = null;
+
+        try {
+            data = raw ? JSON.parse(raw) : null;
+        } catch (error) {
+            data = { message: raw || 'Login failed' };
+        }
+
+        if (!res.ok) {
+            const errorMessage = data?.message || data?.error || 'Please provide correct credentials';
+            throw new Error(errorMessage);
+        }
+
+        return data;
+    })
     .then((data) => {
         if (data?.token) {
             // console.log(data)
@@ -24,12 +44,12 @@ export const loginUser = (user, dispatch) => {
             AsyncStorage.setItem("jwt", token)
             const decoded = jwtDecode(token)
             console.log("token",token)
-            dispatch(setCurrentUser(decoded, user))
+            dispatch(setCurrentUser(decoded, normalizedUser))
         } else {
            Toast.show({
                topOffset: 60,
                type: "error",
-               text1: "Please provide correct credentials",
+               text1: data?.message || "Please provide correct credentials",
                text2: ""
            });
            logoutUser(dispatch)
@@ -39,7 +59,7 @@ export const loginUser = (user, dispatch) => {
         Toast.show({
             topOffset: 60,
             type: "error",
-            text1: "Please provide correct credentials",
+            text1: err?.message || "Please provide correct credentials",
             text2: ""
         });
         console.log(err)

@@ -2,25 +2,23 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ActivityIndicator, Dimensions, ScrollView } from 'react-native';
 import { Surface, Text, TextInput, Searchbar } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
-import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
 
-import baseURL from '../../constants/baseurl';
 import Banner from '../../Shared/Banner';
 import CategoryFilter from './CategoryFilter';
 import ProductList from './ProductList';
 import SearchedProduct from './SearchedProduct';
 import { colors, radius, shadow, spacing } from '../../Shared/theme';
+import { fetchProducts } from '../../Redux/Actions/productActions';
+import { fetchCategories } from '../../Redux/Actions/categoryActions';
 
 var { height } = Dimensions.get('window');
 
 const ProductContainer = ({ route }) => {
-    const [products, setProducts] = useState([]);
     const [productsFiltered, setProductsFiltered] = useState([]);
     const [focus, setFocus] = useState(false);
     const [searchVisible, setSearchVisible] = useState(false);
-    const [categories, setCategories] = useState([]);
     const [active, setActive] = useState(-1);
-    const [initialState, setInitialState] = useState([]);
     const [productsCtg, setProductsCtg] = useState([]);
     const [keyword, setKeyword] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
@@ -28,6 +26,9 @@ const ProductContainer = ({ route }) => {
     const [maxPrice, setMaxPrice] = useState('');
     const [loading, setLoading] = useState(true);
     const [priceError, setPriceError] = useState('');
+    const dispatch = useDispatch();
+    const { items: products, loading: productsLoading } = useSelector((state) => state.products);
+    const { items: categories } = useSelector((state) => state.categories);
 
     const getCategoryId = (product) => {
         if (!product || !product.category) return null;
@@ -101,36 +102,19 @@ const ProductContainer = ({ route }) => {
             setMaxPrice('');
             setKeyword('');
             setSearchVisible(false);
-            setLoading(true);
-
-            axios
-                .get(`${baseURL}products`)
-                .then((res) => {
-                    setProducts(res.data);
-                    setInitialState(res.data);
-                    setLoading(false);
-                })
+            dispatch(fetchProducts())
                 .catch((error) => {
                     console.log('Api call error', error);
-                    setLoading(false);
                 });
-
-            axios
-                .get(`${baseURL}categories`)
-                .then((res) => {
-                    setCategories(res.data);
-                })
+            dispatch(fetchCategories())
                 .catch((error) => {
                     console.log('Api categories call error', error);
                 });
 
             return () => {
-                setProducts([]);
                 setProductsFiltered([]);
                 setFocus(false);
-                setCategories([]);
                 setActive(-1);
-                setInitialState([]);
                 setProductsCtg([]);
                 setSelectedCategory('all');
                 setMinPrice('');
@@ -138,8 +122,12 @@ const ProductContainer = ({ route }) => {
                 setKeyword('');
                 setSearchVisible(false);
             };
-        }, [])
+        }, [dispatch])
     );
+
+    useEffect(() => {
+        setLoading(productsLoading);
+    }, [productsLoading]);
 
     return (
         <Surface style={styles.container}>
