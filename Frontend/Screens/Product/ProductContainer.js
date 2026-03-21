@@ -135,10 +135,8 @@ const ProductContainer = ({ route }) => {
                 });
 
             return () => {
-                setProductsFiltered([]);
                 setFocus(false);
                 setActive(-1);
-                setProductsCtg([]);
                 setSelectedCategory('all');
                 setMinPrice('');
                 setMaxPrice('');

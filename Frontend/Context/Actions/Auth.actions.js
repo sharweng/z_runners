@@ -1,8 +1,8 @@
 // import "core-js/stable/atob";
 import { jwtDecode } from "jwt-decode"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import Toast from "react-native-toast-message"
 import baseURL from "../../constants/baseurl"
+import { removeJwtToken, setJwtToken } from "../../utils/tokenStorage"
 
 export const SET_CURRENT_USER = "SET_CURRENT_USER";
 
@@ -37,13 +37,11 @@ export const loginUser = (user, dispatch) => {
 
         return data;
     })
-    .then((data) => {
+    .then(async (data) => {
         if (data?.token) {
-            // console.log(data)
             const token = data.token;
-            AsyncStorage.setItem("jwt", token)
+            await setJwtToken(token)
             const decoded = jwtDecode(token)
-            console.log("token",token)
             dispatch(setCurrentUser(decoded, normalizedUser))
         } else {
            Toast.show({
@@ -81,7 +79,7 @@ export const getUserProfile = (id) => {
 }
 
 export const logoutUser = (dispatch) => {
-    AsyncStorage.removeItem("jwt");
+    removeJwtToken();
     dispatch(setCurrentUser({}))
 }
 

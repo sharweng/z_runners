@@ -1,22 +1,45 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Image, View, StyleSheet, Text, ScrollView, TextInput, TouchableOpacity, Dimensions } from "react-native";
 import { Surface, } from "react-native-paper";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import AuthGlobal from '../../Context/Store/AuthGlobal';
 import { colors, radius, shadow, spacing } from "../../Shared/theme";
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProductDetails } from '../../Redux/Actions/productActions';
+import { fetchMyOrders } from '../../Redux/Actions/orderActions';
 import { resetReviewSubmit, submitReview as submitReviewAction } from '../../Redux/Actions/reviewActions';
+import { getJwtToken } from '../../utils/tokenStorage';
 
 const { width } = Dimensions.get('window');
 
+const toIdString = (value) => {
+    if (!value) {
+        return null;
+    }
+
+    if (typeof value === 'string') {
+        return value;
+    }
+
+    if (typeof value === 'object' && typeof value?.$oid === 'string') {
+        return value.$oid;
+    }
+
+    return String(value);
+};
+
 const SingleProduct = ({ route }) => {
-    const [item, setItem] = useState(route.params.item);
+    const routeProductId = toIdString(route?.params?.item?.id || route?.params?.item?._id);
+    const [item, setItem] = useState({
+        ...(route?.params?.item || {}),
+        id: routeProductId,
+        _id: routeProductId,
+    });
     const [rating, setRating] = useState('5');
     const [comment, setComment] = useState('');
     const [editingReviewId, setEditingReviewId] = useState(null);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const [canReview, setCanReview] = useState(false);
     const context = useContext(AuthGlobal);
     const dispatch = useDispatch();
     const { selected } = useSelector((state) => state.products);
@@ -24,7 +47,16 @@ const SingleProduct = ({ route }) => {
     const currentUserId = context?.stateUser?.user?.userId;
 
     const loadProduct = () => {
-        dispatch(fetchProductDetails(route.params.item.id))
+        if (!routeProductId) {
+            Toast.show({
+                topOffset: 60,
+                type: 'error',
+                text1: 'Product unavailable',
+            });
+            return;
+        }
+
+        dispatch(fetchProductDetails(routeProductId))
             .then((data) => setItem(data))
             .catch(() => {
                 Toast.show({
@@ -37,13 +69,68 @@ const SingleProduct = ({ route }) => {
 
     useEffect(() => {
         loadProduct();
-    }, [route.params.item.id]);
+    }, [routeProductId]);
 
     useEffect(() => {
-        if (selected?.id === route.params.item.id) {
+        if (selected?.id === routeProductId) {
             setItem(selected);
         }
-    }, [selected, route.params.item.id]);
+    }, [selected, routeProductId]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const checkEligibility = async () => {
+            if (!currentUserId || !routeProductId) {
+                if (isMounted) {
+                    setCanReview(false);
+                }
+                return;
+            }
+
+            try {
+                const token = await getJwtToken();
+                if (!token) {
+                    if (isMounted) {
+                        setCanReview(false);
+                    }
+                    return;
+                }
+
+                const data = await dispatch(fetchMyOrders(currentUserId, token));
+
+                const hasDeliveredOrder = Array.isArray(data) && data.some((order) => {
+                    const normalizedStatus = String(order?.status || '').toLowerCase();
+                    if (normalizedStatus !== 'delivered' && normalizedStatus !== '1') {
+                        return false;
+                    }
+
+                    return Array.isArray(order?.orderItems) && order.orderItems.some((orderItem) => {
+                        const productSource = orderItem?.product;
+                        if (typeof productSource === 'string') {
+                            return productSource === routeProductId;
+                        }
+
+                        return toIdString(productSource?.id || productSource?._id) === routeProductId;
+                    });
+                });
+
+                if (isMounted) {
+                    setCanReview(hasDeliveredOrder);
+                }
+            } catch (error) {
+                if (isMounted) {
+                    setCanReview(false);
+                }
+            }
+        };
+
+        checkEligibility();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [currentUserId, routeProductId]);
 
     const productImages = [item?.image, ...(Array.isArray(item?.images) ? item.images : [])]
         .filter(Boolean)
@@ -56,6 +143,16 @@ const SingleProduct = ({ route }) => {
     };
 
     const submitReview = () => {
+        if (!canReview) {
+            Toast.show({
+                topOffset: 60,
+                type: 'error',
+                text1: 'Review unavailable',
+                text2: 'You can review only after this product is delivered to you.',
+            });
+            return;
+        }
+
         const parsedRating = Number(rating);
 
         if (!Number.isFinite(parsedRating) || parsedRating < 1 || parsedRating > 5) {
@@ -76,7 +173,7 @@ const SingleProduct = ({ route }) => {
             return;
         }
 
-        AsyncStorage.getItem('jwt')
+        getJwtToken()
             .then((token) => {
                 if (!token) {
                     throw new Error('Not authenticated');
@@ -171,7 +268,7 @@ const SingleProduct = ({ route }) => {
                             <Text style={styles.reviewAuthor}>{review.name}</Text>
                             <Text style={styles.reviewMeta}>Rating: {review.rating}/5</Text>
                             <Text style={styles.description}>{review.comment}</Text>
-                            {currentUserId && review.user === currentUserId && (
+                            {canReview && currentUserId && review.user === currentUserId && (
                                 <TouchableOpacity style={styles.inlineButton} onPress={() => editReview(review)}>
                                     <Text style={styles.inlineButtonText}>Edit My Review</Text>
                                 </TouchableOpacity>
@@ -179,26 +276,34 @@ const SingleProduct = ({ route }) => {
                         </View>
                     ))}
 
-                    <Text style={styles.reviewTitle}>{editingReviewId ? 'Update Your Review' : 'Write a Review'}</Text>
-                    <TextInput
-                        value={rating}
-                        onChangeText={setRating}
-                        keyboardType="numeric"
-                        placeholder="Rating (1 to 5)"
-                        placeholderTextColor={colors.muted}
-                        style={styles.input}
-                    />
-                    <TextInput
-                        value={comment}
-                        onChangeText={setComment}
-                        placeholder="Write your review"
-                        placeholderTextColor={colors.muted}
-                        multiline
-                        style={[styles.input, styles.textArea]}
-                    />
-                    <TouchableOpacity style={styles.primaryButton} onPress={submitReview}>
-                        <Text style={styles.primaryButtonText}>{editingReviewId ? 'Update Review' : 'Submit Review'}</Text>
-                    </TouchableOpacity>
+                    {canReview ? (
+                        <>
+                            <Text style={styles.reviewTitle}>{editingReviewId ? 'Update Your Review' : 'Write a Review'}</Text>
+                            <TextInput
+                                value={rating}
+                                onChangeText={setRating}
+                                keyboardType="numeric"
+                                placeholder="Rating (1 to 5)"
+                                placeholderTextColor={colors.muted}
+                                style={styles.input}
+                            />
+                            <TextInput
+                                value={comment}
+                                onChangeText={setComment}
+                                placeholder="Write your review"
+                                placeholderTextColor={colors.muted}
+                                multiline
+                                style={[styles.input, styles.textArea]}
+                            />
+                            <TouchableOpacity style={styles.primaryButton} onPress={submitReview}>
+                                <Text style={styles.primaryButtonText}>{editingReviewId ? 'Update Review' : 'Submit Review'}</Text>
+                            </TouchableOpacity>
+                        </>
+                    ) : (
+                        <Text style={styles.reviewEligibilityText}>
+                            Write a Review becomes available after you have a delivered order for this product.
+                        </Text>
+                    )}
                 </View>
             </ScrollView>
         </Surface>
@@ -281,6 +386,11 @@ const styles = StyleSheet.create({
     reviewMeta: {
         color: colors.muted,
         marginBottom: spacing.sm,
+    },
+    reviewEligibilityText: {
+        color: colors.muted,
+        marginTop: spacing.sm,
+        lineHeight: 20,
     },
     reviewItem: {
         borderWidth: 1,

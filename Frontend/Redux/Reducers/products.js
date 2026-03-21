@@ -5,6 +5,9 @@ import {
     PRODUCT_DETAILS_REQUEST,
     PRODUCT_DETAILS_SUCCESS,
     PRODUCT_DETAILS_FAIL,
+    PRODUCT_BY_ID_REQUEST,
+    PRODUCT_BY_ID_SUCCESS,
+    PRODUCT_BY_ID_FAIL,
     PRODUCT_CREATE_REQUEST,
     PRODUCT_CREATE_SUCCESS,
     PRODUCT_CREATE_FAIL,
@@ -23,6 +26,9 @@ const initialState = {
     selected: null,
     selectedLoading: false,
     selectedError: null,
+    byId: {},
+    byIdLoading: false,
+    byIdError: null,
     creating: false,
     updating: false,
     deleting: false,
@@ -43,6 +49,17 @@ const products = (state = initialState, action) => {
             return { ...state, selectedLoading: false, selected: action.payload };
         case PRODUCT_DETAILS_FAIL:
             return { ...state, selectedLoading: false, selectedError: action.payload };
+
+        case PRODUCT_BY_ID_REQUEST:
+            return { ...state, byIdLoading: true, byIdError: null };
+        case PRODUCT_BY_ID_SUCCESS:
+            return {
+                ...state,
+                byIdLoading: false,
+                byId: { ...state.byId, ...action.payload },
+            };
+        case PRODUCT_BY_ID_FAIL:
+            return { ...state, byIdLoading: false, byIdError: action.payload };
 
         case PRODUCT_CREATE_REQUEST:
             return { ...state, creating: true, error: null };

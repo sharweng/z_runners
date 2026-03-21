@@ -1,7 +1,6 @@
 import React, { useCallback, useContext } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -9,6 +8,7 @@ import OrderCard from '../../Shared/OrderCard';
 import AuthGlobal from '../../Context/Store/AuthGlobal';
 import { fetchMyOrders, updateMyOrderStatus } from '../../Redux/Actions/orderActions';
 import { colors, spacing } from '../../Shared/theme';
+import { getJwtToken } from '../../utils/tokenStorage';
 
 const MyOrders = () => {
     const dispatch = useDispatch();
@@ -25,7 +25,7 @@ const MyOrders = () => {
         }
 
         try {
-            const token = await AsyncStorage.getItem('jwt');
+            const token = await getJwtToken();
             if (!token) {
                 return;
             }
@@ -57,7 +57,7 @@ const MyOrders = () => {
 
     const onUpdateStatus = async (order, nextStatus) => {
         try {
-            const token = await AsyncStorage.getItem('jwt');
+            const token = await getJwtToken();
             if (!token) {
                 return;
             }
@@ -89,6 +89,7 @@ const MyOrders = () => {
                     actionLoading={updating}
                     onCancelOrder={() => onUpdateStatus(item, 'cancelled')}
                     onMarkDelivered={() => onUpdateStatus(item, 'delivered')}
+                    onRateReview={() => navigation.navigate('Order Details', { order: item, focusReview: true })}
                     onViewDetails={() => navigation.navigate('Order Details', { order: item })}
                 />
             </View>

@@ -7,6 +7,9 @@ import {
     PRODUCT_DETAILS_REQUEST,
     PRODUCT_DETAILS_SUCCESS,
     PRODUCT_DETAILS_FAIL,
+    PRODUCT_BY_ID_REQUEST,
+    PRODUCT_BY_ID_SUCCESS,
+    PRODUCT_BY_ID_FAIL,
     PRODUCT_CREATE_REQUEST,
     PRODUCT_CREATE_SUCCESS,
     PRODUCT_CREATE_FAIL,
@@ -107,6 +110,37 @@ export const deleteProduct = (id, token) => async (dispatch) => {
     } catch (error) {
         const message = error?.response?.data?.message || error?.response?.data || error.message;
         dispatch({ type: PRODUCT_DELETE_FAIL, payload: message });
+        throw error;
+    }
+};
+
+export const fetchProductsByIds = (ids = []) => async (dispatch) => {
+    const uniqueIds = [...new Set((ids || []).filter(Boolean))];
+
+    if (!uniqueIds.length) {
+        dispatch({ type: PRODUCT_BY_ID_SUCCESS, payload: {} });
+        return {};
+    }
+
+    dispatch({ type: PRODUCT_BY_ID_REQUEST });
+    try {
+        const responses = await Promise.all(
+            uniqueIds.map(async (id) => {
+                const { data } = await axios.get(`${baseURL}products/${id}`);
+                return { id, data };
+            })
+        );
+
+        const productMap = responses.reduce((acc, current) => {
+            acc[current.id] = current.data;
+            return acc;
+        }, {});
+
+        dispatch({ type: PRODUCT_BY_ID_SUCCESS, payload: productMap });
+        return productMap;
+    } catch (error) {
+        const message = error?.response?.data?.message || error?.response?.data || error.message;
+        dispatch({ type: PRODUCT_BY_ID_FAIL, payload: message });
         throw error;
     }
 };

@@ -17,13 +17,13 @@ import { Searchbar } from 'react-native-paper';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import ListItem from "./ListItem"
 
-import AsyncStorage from '@react-native-async-storage/async-storage'
 var { height, width } = Dimensions.get("window")
 import EasyButton from "../../Shared/StyledComponents/EasyButton";
 import { useNavigation } from "@react-navigation/native"
 import { colors, radius, spacing } from "../../Shared/theme";
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteProduct as deleteProductAction, fetchProducts } from '../../Redux/Actions/productActions';
+import { getJwtToken } from "../../utils/tokenStorage";
 const Products = (props) => {
 
     const [productFilter, setProductFilter] = useState([]);
@@ -110,7 +110,7 @@ const Products = (props) => {
         useCallback(
             () => {
                 // Get Token
-                AsyncStorage.getItem("jwt")
+                getJwtToken()
                     .then((res) => {
                         setToken(res)
                     })

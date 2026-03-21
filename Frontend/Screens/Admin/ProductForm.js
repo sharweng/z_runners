@@ -17,7 +17,6 @@ import EasyButton from "../../Shared/StyledComponents/EasyButton"
 
 
 import Toast from "react-native-toast-message"
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import Error from "../../Shared/Error"
 import * as ImagePicker from "expo-image-picker"
 import { useNavigation } from "@react-navigation/native"
@@ -27,6 +26,7 @@ import { colors, radius, shadow, spacing } from "../../Shared/theme";
 import { useDispatch, useSelector } from 'react-redux';
 import { createProduct, updateProduct, uploadProductGalleryImages } from '../../Redux/Actions/productActions';
 import { fetchCategories } from '../../Redux/Actions/categoryActions';
+import { getJwtToken } from "../../utils/tokenStorage";
 
 
 const ProductForm = (props) => {
@@ -125,7 +125,7 @@ const ProductForm = (props) => {
     }, [routeItem]);
 
     useEffect(() => {
-        AsyncStorage.getItem("jwt")
+        getJwtToken()
             .then((res) => {
                 setToken(res)
             })

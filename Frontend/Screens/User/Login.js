@@ -32,9 +32,42 @@ const Login = (props) => {
 
     useEffect(() => {
         if (context.stateUser.isAuthenticated === true) {
-            navigation.navigate("User Profile")
+            const tabNavigation = navigation.getParent();
+            const rootNavigation = tabNavigation?.getParent();
+
+            if (context?.stateUser?.user?.isAdmin) {
+                tabNavigation?.navigate('Admin', { screen: 'Products' });
+                setTimeout(() => {
+                    rootNavigation?.navigate('Zone Runners', {
+                        screen: 'Admin',
+                        params: { screen: 'Products' },
+                    });
+                }, 0);
+                return;
+            }
+
+            tabNavigation?.navigate('Home', {
+                screen: 'Main',
+                params: {
+                    openSearch: false,
+                    headerSearchText: '',
+                },
+            });
         }
-    }, [context.stateUser.isAuthenticated])
+    }, [context.stateUser.isAuthenticated, context?.stateUser?.user?.isAdmin])
+
+    const continueAsGuest = () => {
+        navigation.navigate('Zone Runners', {
+            screen: 'Home',
+            params: {
+                screen: 'Main',
+                params: {
+                    openSearch: false,
+                    headerSearchText: '',
+                },
+            },
+        });
+    };
 
     return (
         <FormContainer title="Welcome back">
@@ -74,6 +107,9 @@ const Login = (props) => {
             <View style={styles.buttonGroup}>
                 <Text style={styles.middleText}>Dont' Have an Account yet?</Text>
                 <Button color={colors.primary} title="Register" onPress={() => navigation.navigate("Register")} />
+            </View>
+            <View style={styles.buttonGroup}>
+                <Button color={colors.muted} title="Continue as Guest" onPress={continueAsGuest} />
             </View>
         </FormContainer>
     )

@@ -23,6 +23,7 @@ const paymentCards = [
 const Payment = ({ route }) => {
 
   const order = route?.params?.order;
+  const quote = route?.params?.quote;
   const [selected, setSelected] = useState('');
   const [status, setStatus] = useState('unchecked');
   const [card, setCard] = useState('');
@@ -94,7 +95,16 @@ const Payment = ({ route }) => {
         <Button
           color={colors.primary}
           title={"Confirm"}
-          onPress={() => navigation.navigate("Confirm", { order })} />
+          onPress={() => {
+            const paymentMethod = selected === 3 ? (card || 'Card') : (methods.find((m) => m.value === selected)?.name || 'Cash on Delivery');
+            const paymentToken = `tok_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+            navigation.navigate("Confirm", {
+              order,
+              quote,
+              paymentMethod,
+              paymentToken,
+            });
+          }} />
       </View>
     </View>
   )

@@ -1,9 +1,7 @@
-import React, { useContext, useState, useCallback, useEffect } from 'react';
+import React, { useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 // import { Container } from "native-base"
 import { useFocusEffect, useNavigation } from "@react-navigation/native"
-
-import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import axios from "axios"
 import baseURL from "../../constants/baseurl"
@@ -17,6 +15,7 @@ import AuthGlobal from "../../Context/Store/AuthGlobal"
 import { logoutUser } from "../../Context/Actions/Auth.actions"
 import Input from '../../Shared/Input';
 import { colors, radius, shadow, spacing } from "../../Shared/theme";
+import { getJwtToken, removeJwtToken } from "../../utils/tokenStorage";
 const countries = require("../../data/countries.json");
 
 const normalizeCountryValue = (value) => {
@@ -42,11 +41,15 @@ const UserProfile = (props) => {
     const [email, setEmail] = useState('')
     const [phone, setPhone] = useState('')
     const [street, setStreet] = useState('')
+    const [apartment, setApartment] = useState('')
+    const [zip, setZip] = useState('')
     const [city, setCity] = useState('')
     const [country, setCountry] = useState('')
     const [password, setPassword] = useState('')
     const [image, setImage] = useState('')
     const [saving, setSaving] = useState(false)
+    const [shippingSaved, setShippingSaved] = useState(false)
+    const shippingSavedTimeoutRef = useRef(null)
     const navigation = useNavigation()
 
     useEffect(() => {
@@ -57,6 +60,14 @@ const UserProfile = (props) => {
     }, [])
 
     useEffect(() => {
+        return () => {
+            if (shippingSavedTimeoutRef.current) {
+                clearTimeout(shippingSavedTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
         if (!userProfile) {
             return;
         }
@@ -65,6 +76,8 @@ const UserProfile = (props) => {
         setEmail(userProfile.email || '');
         setPhone(userProfile.phone || '');
         setStreet(userProfile.street || '');
+        setApartment(userProfile.apartment || '');
+        setZip(userProfile.zip || '');
         setCity(userProfile.city || '');
         setCountry(normalizeCountryValue(userProfile.country));
         setImage(userProfile.image || '');
@@ -109,7 +122,7 @@ const UserProfile = (props) => {
 
         try {
             setSaving(true);
-            const token = await AsyncStorage.getItem('jwt');
+            const token = await getJwtToken();
             const userId = context?.stateUser?.user?.userId;
 
             const formData = new FormData();
@@ -117,6 +130,8 @@ const UserProfile = (props) => {
             formData.append('email', email);
             formData.append('phone', phone);
             formData.append('street', street);
+            formData.append('apartment', apartment);
+            formData.append('zip', zip);
             formData.append('city', city);
             formData.append('country', country);
 
@@ -150,6 +165,13 @@ const UserProfile = (props) => {
 
             setUserProfile(res.data);
             setPassword('');
+            setShippingSaved(true);
+            if (shippingSavedTimeoutRef.current) {
+                clearTimeout(shippingSavedTimeoutRef.current);
+            }
+            shippingSavedTimeoutRef.current = setTimeout(() => {
+                setShippingSaved(false);
+            }, 3500);
             Toast.show({
                 topOffset: 60,
                 type: 'success',
@@ -168,7 +190,8 @@ const UserProfile = (props) => {
     }
 
     const handleSignOut = () => {
-        AsyncStorage.removeItem("jwt");
+        navigation.navigate('Login');
+        removeJwtToken();
         logoutUser(context.dispatch);
     }
 
@@ -178,10 +201,20 @@ const UserProfile = (props) => {
                 context.stateUser.isAuthenticated === false ||
                 context.stateUser.isAuthenticated === null
             ) {
-                navigation.navigate("Login")
+                navigation.navigate('Zone Runners', {
+                    screen: 'Home',
+                    params: {
+                        screen: 'Main',
+                        params: {
+                            openSearch: false,
+                            headerSearchText: '',
+                        },
+                    },
+                });
+                return;
             }
             // console.log(context.stateUser.user)
-            AsyncStorage.getItem("jwt")
+            getJwtToken()
                 .then((res) => {
                     axios
                         .get(`${baseURL}users/${context.stateUser.user.userId}`, {
@@ -227,8 +260,15 @@ const UserProfile = (props) => {
                     <Input placeholder="Name" value={name} onChangeText={setName} />
                     <Input placeholder="Email" value={email} onChangeText={(text) => setEmail(text.toLowerCase())} />
                     <Input placeholder="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-                    <Input placeholder="Street" value={street} onChangeText={setStreet} />
+
+                    <Text style={styles.sectionTitle}>Shipping Address</Text>
+                    <Input placeholder="Shipping Address 1" value={street} onChangeText={setStreet} />
+                    <Input placeholder="Shipping Address 2" value={apartment} onChangeText={setApartment} />
                     <Input placeholder="City" value={city} onChangeText={setCity} />
+                    <Input placeholder="Zip Code" value={zip} onChangeText={setZip} keyboardType="numeric" />
+                    {shippingSaved ? (
+                        <Text style={styles.helperSuccessText}>Saved shipping address.</Text>
+                    ) : null}
 
                     <Text style={styles.fieldLabel}>Country</Text>
                     <View style={styles.pickerWrap}>
@@ -394,6 +434,13 @@ const styles = StyleSheet.create({
     },
     disabledButton: {
         opacity: 0.7,
+    },
+    helperSuccessText: {
+        width: '100%',
+        marginTop: spacing.xs,
+        marginBottom: spacing.sm,
+        color: colors.success,
+        fontWeight: '600',
     },
     bottomSpace: {
         height: spacing.xl,

@@ -6,7 +6,7 @@ import { Text, View, TouchableHighlight, StyleSheet, Dimensions, TouchableOpacit
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Icon from "react-native-vector-icons/FontAwesome";
 import { SwipeListView } from 'react-native-swipe-list-view';
-import { removeFromCart, clearCart } from '../../Redux/Actions/cartActions'
+import { removeFromCart, clearCart, updateCartQuantity } from '../../Redux/Actions/cartActions'
 import { Surface, Divider, Avatar, Button } from 'react-native-paper';
 var { height, width } = Dimensions.get("window");
 import { Ionicons } from "@expo/vector-icons";
@@ -39,8 +39,30 @@ const Cart = () => {
     var total = 0;
     console.log("cart", cartItems)
     cartItems.forEach(cart => {
-        return (total += cart.price)
+        const price = Number(cart?.price) || 0;
+        const quantity = Number(cart?.quantity) || 1;
+        return (total += (price * quantity))
     });
+
+    const increaseQuantity = (item) => {
+        const current = Number(item?.quantity) || 1;
+        dispatch(updateCartQuantity(item.id || item._id || item.product, current + 1));
+    };
+
+    const decreaseQuantity = (item) => {
+        const current = Number(item?.quantity) || 1;
+        if (current <= 1) {
+            dispatch(removeFromCart(item));
+            return;
+        }
+
+        dispatch(updateCartQuantity(item.id || item._id || item.product, current - 1));
+    };
+
+    const removeItem = (item) => {
+        dispatch(removeFromCart(item));
+    };
+
     const renderItem = ({ item, index }) =>
         <TouchableHighlight>
             <Surface style={styles.card}>
@@ -54,9 +76,19 @@ const Cart = () => {
                     {item.name}
                 </Text>
 
+                <View style={styles.qtyWrap}>
+                    <TouchableOpacity style={styles.qtyButton} onPress={() => decreaseQuantity(item)}>
+                        <Text style={styles.qtyButtonText}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.qtyValue}>{Number(item?.quantity) || 1}</Text>
+                    <TouchableOpacity style={styles.qtyButton} onPress={() => increaseQuantity(item)}>
+                        <Text style={styles.qtyButtonText}>+</Text>
+                    </TouchableOpacity>
+                </View>
+
                 <Divider />
                 <Text style={styles.price}>
-                    $ {item.price}
+                    $ {(Number(item?.price) || 0).toFixed(2)}
                 </Text>
 
 
@@ -65,7 +97,7 @@ const Cart = () => {
 
     const renderHiddenItem = (cartItems) =>
         <TouchableOpacity
-            onPress={() => dispatch(removeFromCart(cartItems.item))}
+            onPress={() => removeItem(cartItems.item)}
         >
             <Surface style={styles.hiddenButton} >
                 <View >
@@ -209,6 +241,30 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: spacing.md,
         ...shadow,
+    },
+    qtyWrap: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: radius.pill,
+        overflow: 'hidden',
+        marginRight: spacing.sm,
+    },
+    qtyButton: {
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
+        backgroundColor: colors.surfaceSoft,
+    },
+    qtyButtonText: {
+        color: colors.text,
+        fontWeight: '800',
+    },
+    qtyValue: {
+        minWidth: 28,
+        textAlign: 'center',
+        color: colors.text,
+        fontWeight: '700',
     },
     itemName: {
         flex: 1,

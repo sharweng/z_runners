@@ -3,6 +3,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 import MyOrders from '../Screens/User/MyOrders';
 import OrderDetails from '../Screens/User/OrderDetails';
+import SingleProduct from '../Screens/Product/SingleProduct';
 
 const Stack = createStackNavigator();
 
@@ -21,6 +22,14 @@ const MyOrdersNavigator = () => {
         component={OrderDetails}
         options={{
           headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="Product Detail"
+        component={SingleProduct}
+        options={{
+          headerShown: true,
+          title: 'Product detail',
         }}
       />
     </Stack.Navigator>

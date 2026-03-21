@@ -12,13 +12,14 @@ const Tab = createMaterialTopTabNavigator();
 const Main = () => {
     const context = useContext(AuthGlobal);
     const isAdmin = !!context?.stateUser?.user?.isAdmin;
+    const isAuthenticated = !!context?.stateUser?.isAuthenticated;
 
     return (
         <Tab.Navigator
             initialRouteName="Home"
             tabBar={() => null}
             screenOptions={{
-                swipeEnabled: true,
+                swipeEnabled: false,
                 animationEnabled: true,
                 lazy: true,
             }}
@@ -39,7 +40,7 @@ const Main = () => {
                 }}
             />
 
-            {!isAdmin && (
+            {isAuthenticated && !isAdmin && (
                 <Tab.Screen
                     name="My Orders"
                     component={MyOrdersNavigator}
@@ -49,15 +50,14 @@ const Main = () => {
                 />
             )}
 
-            {isAdmin && (
-                <Tab.Screen
-                    name="Admin"
-                    component={AdminNavigator}
-                    options={{
-                        headerShown: false,
-                    }}
-                />
-            )}
+            <Tab.Screen
+                name="Admin"
+                component={AdminNavigator}
+                options={{
+                    headerShown: false,
+                }}
+            />
+
             <Tab.Screen
                 name="User"
                 component={UserNavigator}

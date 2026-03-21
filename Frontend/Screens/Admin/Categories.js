@@ -11,7 +11,7 @@ import EasyButton from "../../Shared/StyledComponents/EasyButton";
 import { colors, radius, shadow, spacing } from "../../Shared/theme";
 import baseURL from "../../constants/baseurl";
 import axios from "axios";
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { getJwtToken } from "../../utils/tokenStorage";
 
 
 var { width } = Dimensions.get("window")
@@ -38,7 +38,7 @@ const Categories = (props) => {
     const [token, setToken] = useState();
 
     useEffect(() => {
-        AsyncStorage.getItem("jwt")
+        getJwtToken()
             .then((res) => {
                 setToken(res);
             })

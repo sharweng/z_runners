@@ -1,7 +1,7 @@
 import React, { useEffect, useReducer, useState } from "react";
 // import "core-js/stable/atob";
 import { jwtDecode } from "jwt-decode"
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { getJwtToken } from "../../utils/tokenStorage";
 
 import authReducer from "../Reducers/Auth.reducer";
 import { setCurrentUser } from "../Actions/Auth.actions";
@@ -19,7 +19,7 @@ const Auth = props => {
         let isMounted = true;
 
         setShowChild(true);
-        AsyncStorage.getItem("jwt")
+        getJwtToken()
             .then((token) => {
                 if (token && isMounted) {
                     dispatch(setCurrentUser(jwtDecode(token)))

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 
 import TrafficLight from "./StyledComponents/TrafficLight";
@@ -6,11 +6,11 @@ import EasyButton from "./StyledComponents/EasyButton";
 import Toast from "react-native-toast-message";
 import { Picker } from "@react-native-picker/picker";
 
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useNavigation } from '@react-navigation/native'
 import { colors, radius, shadow, spacing } from "./theme";
 import { useDispatch } from 'react-redux';
 import { updateOrderStatus } from '../Redux/Actions/orderActions';
+import { getJwtToken } from "../utils/tokenStorage";
 
 const adminCodes = [
   { name: "pending", code: "pending" },
@@ -19,23 +19,25 @@ const adminCodes = [
 ];
 
 const normalizeStatus = (status) => {
-  if (status === '3' || status === 'ongoing') {
+  const value = String(status || '').trim().toLowerCase();
+
+  if (value === '3' || value === 'ongoing') {
     return 'pending';
   }
 
-  if (status === '2') {
+  if (value === '2') {
     return 'shipped';
   }
 
-  if (status === '1') {
+  if (value === '1') {
     return 'delivered';
   }
 
-  if (status === 'canceled') {
+  if (value === 'canceled') {
     return 'cancelled';
   }
 
-  return status;
+  return value || 'pending';
 };
 
 const getFormattedDate = (dateRaw) => {
@@ -59,18 +61,30 @@ const getItemCount = (orderItems) => {
   return orderItems.reduce((count, current) => count + (Number(current?.quantity) || 0), 0);
 };
 
+const formatMoney = (value) => {
+  const amount = Number(value) || 0;
+  return amount.toFixed(2);
+};
+
 const OrderCard = ({
   item,
   update,
   compact = false,
   onViewDetails,
+  onRateReview,
   onCancelOrder,
   onMarkDelivered,
+  onStatusUpdated,
   actionLoading = false,
 }) => {
   const normalizedStatus = normalizeStatus(item.status);
+  const isOrderLocked = item?.isLocked || normalizedStatus === 'delivered' || normalizedStatus === 'cancelled';
   const [statusChange, setStatusChange] = useState(normalizedStatus || 'pending');
   const itemCount = getItemCount(item.orderItems);
+
+  useEffect(() => {
+    setStatusChange(normalizedStatus || 'pending');
+  }, [normalizedStatus, item?.id]);
 
   const statusMeta = useMemo(() => {
     if (normalizedStatus === 'pending') {
@@ -107,30 +121,38 @@ const OrderCard = ({
   const navigation = useNavigation()
   const dispatch = useDispatch();
 
-  const updateOrder = () => {
-    AsyncStorage.getItem("jwt")
-      .then((token) => {
-        return dispatch(updateOrderStatus(item.id, statusChange, token));
-      })
-      .then(() => {
+  const updateOrder = async () => {
+    if (isOrderLocked) {
+      Toast.show({
+        topOffset: 60,
+        type: "error",
+        text1: "Order Locked",
+        text2: "Delivered or cancelled orders cannot be updated.",
+      });
+      return;
+    }
+
+    try {
+      const token = await getJwtToken();
+      const updatedOrder = await dispatch(updateOrderStatus(item.id, statusChange, token));
+      if (typeof onStatusUpdated === 'function') {
+        onStatusUpdated(updatedOrder);
+      }
           Toast.show({
             topOffset: 60,
             type: "success",
             text1: "Order Updated",
             text2: "",
           });
-          setTimeout(() => {
-            navigation.navigate("Products");
-          }, 500);
-      })
-      .catch((error) => {
-        Toast.show({
-          topOffset: 60,
-          type: "error",
-          text1: "Something went wrong",
-          text2: "Please try again",
-        });
+    } catch (error) {
+      const message = error?.message || 'Please try again';
+      Toast.show({
+        topOffset: 60,
+        type: "error",
+        text1: "Something went wrong",
+        text2: message,
       });
+    }
   }
   return (
     <View style={[styles.container, { borderColor: statusMeta.cardColor }]}> 
@@ -157,7 +179,7 @@ const OrderCard = ({
         )}
         <View style={styles.priceContainer}>
           <Text style={styles.meta}>Price</Text>
-          <Text style={styles.price}>$ {item.totalPrice}</Text>
+          <Text style={styles.price}>$ {formatMoney(item.totalPrice)}</Text>
         </View>
         {!update ? (
           <View style={styles.userActionsWrap}>
@@ -181,6 +203,15 @@ const OrderCard = ({
                 <Text style={styles.actionText}>Mark Delivered</Text>
               </EasyButton>
             ) : null}
+            {normalizedStatus === 'delivered' && onRateReview ? (
+              <EasyButton
+                secondary
+                medium
+                onPress={onRateReview}
+              >
+                <Text style={styles.actionText}>Rate & Review</Text>
+              </EasyButton>
+            ) : null}
             {onViewDetails ? (
               <EasyButton
                 primary
@@ -194,28 +225,36 @@ const OrderCard = ({
         ) : null}
         {update ? <View>
           <>
-            <Picker
-              style={styles.picker}
-              selectedValue={statusChange}
-              dropdownIconColor={colors.primary}
-              onValueChange={(e) => setStatusChange(e)}
-            >
-              {adminCodes.map((c) => {
-                return <Picker.Item
-                  key={c.code}
-                  label={c.name}
-                  value={c.code}
-                />
-              })}
-            </Picker>
-            <EasyButton
-              secondary
-              large
-              style={styles.actionButton}
-              onPress={() => updateOrder()}
-            >
-              <Text style={{ color: "white" }}>Update</Text>
-            </EasyButton>
+            {isOrderLocked ? (
+              <Text style={styles.lockedOrderText}>
+                {normalizedStatus === 'cancelled' ? 'Order Cancelled' : 'Order Delivered'}
+              </Text>
+            ) : (
+              <>
+                <Picker
+                  style={styles.picker}
+                  selectedValue={statusChange}
+                  dropdownIconColor={colors.primary}
+                  onValueChange={(e) => setStatusChange(e)}
+                >
+                  {adminCodes.map((c) => {
+                    return <Picker.Item
+                      key={c.code}
+                      label={c.name}
+                      value={c.code}
+                    />
+                  })}
+                </Picker>
+                <EasyButton
+                  secondary
+                  large
+                  style={styles.actionButton}
+                  onPress={() => updateOrder()}
+                >
+                  <Text style={{ color: "white" }}>Update</Text>
+                </EasyButton>
+              </>
+            )}
           </>
         </View> : null}
 
@@ -293,6 +332,16 @@ const styles = StyleSheet.create({
   actionText: {
     color: 'white',
     fontWeight: '700',
+  },
+  lockedOrderText: {
+    color: colors.muted,
+    fontStyle: 'italic',
+    marginTop: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surfaceSoft,
+    borderRadius: radius.md,
+    textAlign: 'center',
   },
 });
 

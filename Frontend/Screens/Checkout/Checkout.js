@@ -6,10 +6,9 @@ import FormContainer from '../../Shared/FormContainer'
 import Input from '../../Shared/Input'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import axios from 'axios'
 import baseURL from '../../constants/baseurl'
 
@@ -18,6 +17,8 @@ import AuthGlobal from '../../Context/Store/AuthGlobal'
 import Toast from 'react-native-toast-message'
 import { colors, spacing } from '../../Shared/theme'
 import { replaceSavedCartItems } from '../Cart/cartStorage';
+import { getJwtToken } from '../../utils/tokenStorage';
+import { fetchCheckoutQuote } from '../../Redux/Actions/orderActions';
 const Checkout = (props) => {
     const [user, setUser] = useState('')
     const [orderItems, setOrderItems] = useState([])
@@ -29,7 +30,9 @@ const Checkout = (props) => {
     const [phone, setPhone] = useState('')
 
     const navigation = useNavigation()
+    const dispatch = useDispatch();
     const cartItems = useSelector(state => state.cartItems)
+    const { quoteLoading } = useSelector((state) => state.orders);
     const context = useContext(AuthGlobal);
     useEffect(() => {
         setOrderItems(cartItems)
@@ -69,7 +72,7 @@ const Checkout = (props) => {
 
         const loadProfileIntoCheckout = async () => {
             try {
-                const token = await AsyncStorage.getItem('jwt');
+                const token = await getJwtToken();
                 if (!token) {
                     return;
                 }
@@ -88,7 +91,9 @@ const Checkout = (props) => {
                 const profile = response.data;
                 setPhone(profile.phone || '');
                 setAddress(profile.street || '');
+                setAddress2(profile.apartment || '');
                 setCity(profile.city || '');
+                setZip(profile.zip || '');
                 setCountry(profile.country || 'Philippines');
             } catch (error) {
                 // Keep manual checkout fields editable when profile fetch fails.
@@ -114,7 +119,16 @@ const Checkout = (props) => {
             return;
         }
 
-        console.log("orders", orderItems)
+        if (!address || !city || !zip || !country || !phone) {
+            Toast.show({
+                topOffset: 60,
+                type: 'error',
+                text1: 'Missing shipping fields',
+                text2: 'Please complete your shipping address first.',
+            });
+            return;
+        }
+
         const ownerKey = user ? `user:${user}` : 'guest';
         await replaceSavedCartItems(ownerKey, orderItems);
         let order = {
@@ -129,8 +143,30 @@ const Checkout = (props) => {
             user,
             zip,
         }
-        console.log("ship", order)
-        navigation.navigate("Payment", { order })
+
+        try {
+            const token = await getJwtToken();
+            const quote = await dispatch(fetchCheckoutQuote({ orderItems }, token));
+            if (Array.isArray(quote?.unavailableItems) && quote.unavailableItems.length > 0) {
+                Toast.show({
+                    topOffset: 60,
+                    type: 'error',
+                    text1: 'Some items are unavailable',
+                    text2: 'Please update your cart quantities.',
+                });
+                return;
+            }
+
+            navigation.navigate("Payment", { order, quote })
+        } catch (error) {
+            const message = error?.response?.data?.message || error?.message || 'Unable to validate checkout';
+            Toast.show({
+                topOffset: 60,
+                type: 'error',
+                text1: 'Checkout validation failed',
+                text2: `${message}`,
+            });
+        }
     }
     return (
 
@@ -194,7 +230,7 @@ const Checkout = (props) => {
 
 
                 <View style={{ width: '80%', alignItems: "center" }}>
-                    <Button color={colors.accent} title="Confirm" onPress={() => checkOut()} />
+                    <Button color={colors.accent} title={quoteLoading ? 'Validating...' : 'Confirm'} onPress={() => checkOut()} disabled={quoteLoading} />
                 </View>
             </FormContainer>
         </KeyboardAwareScrollView>
