@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Text, View, TouchableHighlight, StyleSheet, Dimensions, TouchableOpacity } from 'react-native'
 
@@ -11,11 +11,14 @@ import { Surface, Divider, Avatar, Button } from 'react-native-paper';
 var { height, width } = Dimensions.get("window");
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radius, shadow, spacing } from '../../Shared/theme';
+import Toast from 'react-native-toast-message';
+import AuthGlobal from '../../Context/Store/AuthGlobal';
 
 const Cart = () => {
     const navigation = useNavigation()
     const dispatch = useDispatch()
     const cartItems = useSelector(state => state.cartItems)
+    const context = useContext(AuthGlobal);
 
     var total = 0;
     console.log("cart", cartItems)
@@ -24,7 +27,7 @@ const Cart = () => {
     });
     const renderItem = ({ item, index }) =>
         <TouchableHighlight>
-            <Surface style={styles.card} keyExtractor={item => item.id}>
+            <Surface style={styles.card}>
 
                 <Avatar.Image size={48} source={{
                     uri: item.image ?
@@ -58,6 +61,22 @@ const Cart = () => {
             </Surface>
 
         </TouchableOpacity>;
+
+    const handleCheckout = () => {
+        if (!context?.stateUser?.isAuthenticated) {
+            Toast.show({
+                topOffset: 60,
+                type: 'error',
+                text1: 'Please Login to Checkout',
+                text2: '',
+            });
+            navigation.navigate('User', { screen: 'Login' });
+            return;
+        }
+
+        navigation.navigate('Checkout');
+    };
+
     return (
         <>
             {cartItems.length > 0 ? (
@@ -71,7 +90,9 @@ const Cart = () => {
                         rightOpenValue={-200}
                         previewOpenValue={-100}
                         previewOpenDelay={3000}
-                        keyExtractor={item => item._id.$oid}
+                        keyExtractor={(item, index) =>
+                            String(item?.id || item?._id?.$oid || item?._id || item?.product || index)
+                        }
                     />
                 </Surface>
             ) : (
@@ -96,7 +117,7 @@ const Cart = () => {
                     <Button
                         mode="contained"
                         buttonColor={colors.success}
-                        onPress={() => navigation.navigate('Checkout')}>Check Out</Button>
+                        onPress={handleCheckout}>Check Out</Button>
                 </View>
 
             </View >

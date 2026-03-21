@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 if (!global.setImmediate) {
   global.setImmediate = setTimeout;
 }
@@ -9,6 +9,7 @@ import { Provider, useDispatch, useSelector } from 'react-redux';
 import store from './Redux/store';
 import Toast from 'react-native-toast-message';
 import Auth from './Context/Store/Auth';
+import AuthGlobal from './Context/Store/AuthGlobal';
 import DrawerNavigator from './Navigators/DrawerNavigator';
 import { colors } from './Shared/theme';
 import { setCartItems } from './Redux/Actions/cartActions';
@@ -21,7 +22,11 @@ import {
 const CartPersistence = () => {
   const dispatch = useDispatch();
   const cartItems = useSelector((state) => state.cartItems);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const context = useContext(AuthGlobal);
+  const [hydratedOwnerKey, setHydratedOwnerKey] = useState('');
+
+  const userId = context?.stateUser?.user?.userId;
+  const cartOwnerKey = userId ? `user:${userId}` : 'guest';
 
   useEffect(() => {
     let isMounted = true;
@@ -29,15 +34,16 @@ const CartPersistence = () => {
     const bootstrapCart = async () => {
       try {
         await initCartTable();
-        const savedItems = await getSavedCartItems();
-        if (isMounted && savedItems.length > 0) {
+        const savedItems = await getSavedCartItems(cartOwnerKey);
+        if (isMounted) {
           dispatch(setCartItems(savedItems));
+          setHydratedOwnerKey(cartOwnerKey);
         }
       } catch (error) {
         console.log('Failed to hydrate cart from SQLite', error);
-      } finally {
         if (isMounted) {
-          setIsHydrated(true);
+          dispatch(setCartItems([]));
+          setHydratedOwnerKey(cartOwnerKey);
         }
       }
     };
@@ -47,17 +53,17 @@ const CartPersistence = () => {
     return () => {
       isMounted = false;
     };
-  }, [dispatch]);
+  }, [cartOwnerKey, dispatch]);
 
   useEffect(() => {
-    if (!isHydrated) {
+    if (hydratedOwnerKey !== cartOwnerKey) {
       return;
     }
 
-    replaceSavedCartItems(cartItems).catch((error) => {
+    replaceSavedCartItems(cartOwnerKey, cartItems).catch((error) => {
       console.log('Failed to persist cart to SQLite', error);
     });
-  }, [cartItems, isHydrated]);
+  }, [cartItems, cartOwnerKey, hydratedOwnerKey]);
 
   return null;
 };

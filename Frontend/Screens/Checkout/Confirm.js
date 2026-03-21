@@ -37,7 +37,10 @@ const Confirm = (props) => {
             })
             .then(async (res) => {
                 console.log(res.status)
-                await clearSavedCartItems();
+                const ownerKey = context?.stateUser?.user?.userId
+                    ? `user:${context.stateUser.user.userId}`
+                    : 'guest';
+                await clearSavedCartItems(ownerKey);
                 Toast.show({
                     topOffset: 60,
                     type: "success",

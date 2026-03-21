@@ -49,7 +49,8 @@ const Checkout = (props) => {
 
     const checkOut = async () => {
         console.log("orders", orderItems)
-        await replaceSavedCartItems(orderItems);
+        const ownerKey = user ? `user:${user}` : 'guest';
+        await replaceSavedCartItems(ownerKey, orderItems);
         let order = {
             city,
             country,

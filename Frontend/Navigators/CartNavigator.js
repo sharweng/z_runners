@@ -1,13 +1,17 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { createStackNavigator } from "@react-navigation/stack"
 
 import Cart from '../Screens/Cart/Cart';
 import CheckoutNavigator from './CheckoutNavigator';
 import { colors } from '../Shared/theme';
+import AuthGlobal from '../Context/Store/AuthGlobal';
 
 const Stack = createStackNavigator();
 
 function MyStack() {
+    const context = useContext(AuthGlobal);
+    const isAuthenticated = !!context?.stateUser?.isAuthenticated;
+
     return(
         <Stack.Navigator>
             <Stack.Screen 
@@ -17,15 +21,17 @@ function MyStack() {
                     headerShown: false
                 }}
             />
-            <Stack.Screen 
-                name="Checkout"
-                component={CheckoutNavigator}
-                options={{
-                    title: 'Checkout',
-                    headerStyle: { backgroundColor: colors.surface },
-                    headerTintColor: colors.text,
-                }}
-            />
+            {isAuthenticated ? (
+                <Stack.Screen 
+                    name="Checkout"
+                    component={CheckoutNavigator}
+                    options={{
+                        title: 'Checkout',
+                        headerStyle: { backgroundColor: colors.surface },
+                        headerTintColor: colors.text,
+                    }}
+                />
+            ) : null}
         </Stack.Navigator>
     )
 }
