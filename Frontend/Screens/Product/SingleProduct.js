@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Image, View, StyleSheet, Text, ScrollView, TextInput, TouchableOpacity, Dimensions } from "react-native";
 import { Surface, } from "react-native-paper";
+import { Picker } from '@react-native-picker/picker';
 import Toast from 'react-native-toast-message';
 import AuthGlobal from '../../Context/Store/AuthGlobal';
 import { colors, spacing } from "../../Shared/theme";
@@ -324,14 +325,19 @@ const SingleProduct = ({ route }) => {
                     {showUpdateForm ? (
                         <>
                             <Text style={styles.reviewTitle}>Update Your Review</Text>
-                            <TextInput
-                                value={rating}
-                                onChangeText={setRating}
-                                keyboardType="numeric"
-                                placeholder="Rating (1 to 5)"
-                                placeholderTextColor={colors.muted}
-                                style={styles.input}
-                            />
+                            <View style={styles.pickerWrap}>
+                                <Picker
+                                    selectedValue={rating}
+                                    onValueChange={(value) => setRating(String(value))}
+                                    style={styles.picker}
+                                >
+                                    <Picker.Item label="1" value="1" />
+                                    <Picker.Item label="2" value="2" />
+                                    <Picker.Item label="3" value="3" />
+                                    <Picker.Item label="4" value="4" />
+                                    <Picker.Item label="5" value="5" />
+                                </Picker>
+                            </View>
                             <TextInput
                                 value={comment}
                                 onChangeText={setComment}
@@ -354,14 +360,19 @@ const SingleProduct = ({ route }) => {
                     ) : canWriteNewReview ? (
                         <>
                             <Text style={styles.reviewTitle}>Write a Review</Text>
-                            <TextInput
-                                value={rating}
-                                onChangeText={setRating}
-                                keyboardType="numeric"
-                                placeholder="Rating (1 to 5)"
-                                placeholderTextColor={colors.muted}
-                                style={styles.input}
-                            />
+                            <View style={styles.pickerWrap}>
+                                <Picker
+                                    selectedValue={rating}
+                                    onValueChange={(value) => setRating(String(value))}
+                                    style={styles.picker}
+                                >
+                                    <Picker.Item label="1" value="1" />
+                                    <Picker.Item label="2" value="2" />
+                                    <Picker.Item label="3" value="3" />
+                                    <Picker.Item label="4" value="4" />
+                                    <Picker.Item label="5" value="5" />
+                                </Picker>
+                            </View>
                             <TextInput
                                 value={comment}
                                 onChangeText={setComment}
@@ -375,11 +386,11 @@ const SingleProduct = ({ route }) => {
                             </TouchableOpacity>
                         </>
                     ) : (
-                        <Text style={styles.reviewEligibilityText}>
-                            {userReview
-                                ? 'You already reviewed this product. Use Edit Review to make changes.'
-                                : 'Write a Review becomes available after you have a delivered order for this product.'}
-                        </Text>
+                        !userReview ? (
+                            <Text style={styles.reviewEligibilityText}>
+                                Write a Review becomes available after you have a delivered order for this product.
+                            </Text>
+                        ) : null
                     )}
                 </View>
             </ScrollView>
@@ -487,6 +498,15 @@ const styles = StyleSheet.create({
         marginBottom: spacing.sm,
         color: colors.text,
         backgroundColor: colors.surface,
+    },
+    pickerWrap: {
+        borderWidth: 2,
+        borderColor: colors.border,
+        marginBottom: spacing.sm,
+        backgroundColor: colors.surface,
+    },
+    picker: {
+        color: colors.text,
     },
     textArea: {
         minHeight: 90,

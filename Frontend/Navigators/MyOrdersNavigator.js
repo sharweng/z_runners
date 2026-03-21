@@ -28,8 +28,7 @@ const MyOrdersNavigator = () => {
         name="Product Detail"
         component={SingleProduct}
         options={{
-          headerShown: true,
-          title: 'Product detail',
+          headerShown: false,
         }}
       />
     </Stack.Navigator>

@@ -7,20 +7,14 @@ import {
     TouchableOpacity,
     Dimensions,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native"
 import { colors, spacing } from "../../Shared/theme";
 
 
 var { width } = Dimensions.get("window");
 
 const ListItem = ({ item, index }) => {
-    const navigation = useNavigation()
-
     return (
-        <TouchableOpacity
-            onPress={() => {
-                navigation.navigate('Home', { screen: 'Product Detail', params: { item } })
-            }}
+        <View
             style={[styles.container, {
                 backgroundColor: index % 2 == 0 ? colors.surface : colors.surfaceSoft
             }]}
@@ -38,7 +32,7 @@ const ListItem = ({ item, index }) => {
             <Text style={styles.item} numberOfLines={1} ellipsizeMode="tail">{item.name ? item.name : null}</Text>
             <Text style={styles.item} numberOfLines={1} ellipsizeMode="tail">{item.category ? item.category.name : null}</Text>
             <Text style={styles.item}>$ {item.price}</Text>
-        </TouchableOpacity>
+        </View>
     )
 }
 

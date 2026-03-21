@@ -1,13 +1,12 @@
 import React, { useCallback, useContext } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { Text, View, TouchableHighlight, StyleSheet, Dimensions, TouchableOpacity, Image } from 'react-native'
+import { Text, View, StyleSheet, Dimensions, TouchableOpacity, Image } from 'react-native'
 
 
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import Icon from "react-native-vector-icons/FontAwesome";
 import { SwipeListView } from 'react-native-swipe-list-view';
 import { removeFromCart, clearCart, updateCartQuantity } from '../../Redux/Actions/cartActions'
-import { Surface, Button } from 'react-native-paper';
+import { Surface } from 'react-native-paper';
 var { height, width } = Dimensions.get("window");
 import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing } from '../../Shared/theme';
@@ -37,7 +36,6 @@ const Cart = () => {
     );
 
     var total = 0;
-    console.log("cart", cartItems)
     cartItems.forEach(cart => {
         const price = Number(cart?.price) || 0;
         const quantity = Number(cart?.quantity) || 1;
@@ -64,7 +62,6 @@ const Cart = () => {
     };
 
     const renderItem = ({ item, index }) =>
-        <TouchableHighlight>
             <Surface style={styles.card}>
 
                 <Image
@@ -95,22 +92,19 @@ const Cart = () => {
 
 
             </Surface>
-        </TouchableHighlight>;
+        ;
 
-    const renderHiddenItem = (cartItems) =>
-        <TouchableOpacity
-            onPress={() => removeItem(cartItems.item)}
-        >
-            <Surface style={styles.hiddenButton} >
-                <View >
-                    <Ionicons name="trash" color={"white"} size={30} bg="red" />
-                    <Text color="white" fontSize="xs" fontWeight="medium">
-                        Delete
-                    </Text>
-                </View>
-            </Surface>
-
-        </TouchableOpacity>;
+    const renderHiddenItem = ({ item }) => (
+        <View style={styles.rowBack}>
+            <TouchableOpacity
+                style={styles.backRightBtn}
+                onPress={() => removeItem(item)}
+            >
+                <Ionicons name="trash" color="white" size={20} />
+                <Text style={styles.backText}>Delete</Text>
+            </TouchableOpacity>
+        </View>
+    );
 
     const handleCheckout = () => {
         if (!cartItems.length) {
@@ -146,10 +140,19 @@ const Cart = () => {
                         renderItem={renderItem}
                         renderHiddenItem={renderHiddenItem}
                         disableRightSwipe={true}
-                        leftOpenValue={75}
-                        rightOpenValue={-200}
-                        previewOpenValue={-100}
-                        previewOpenDelay={3000}
+                        disableLeftSwipe={false}
+                        leftOpenValue={0}
+                        rightOpenValue={-88}
+                        stopRightSwipe={-88}
+                        directionalDistanceChangeThreshold={4}
+                        swipeToOpenPercent={15}
+                        swipeToClosePercent={20}
+                        swipeToOpenVelocityContribution={8}
+                        closeOnRowPress={true}
+                        closeOnScroll={true}
+                        previewOpenValue={-88}
+                        previewOpenDelay={1200}
+                        contentContainerStyle={styles.listContent}
                         keyExtractor={(item, index) =>
                             String(item?.id || item?._id?.$oid || item?._id || item?.product || index)
                         }
@@ -167,17 +170,21 @@ const Cart = () => {
                     <Text style={styles.price}>$ {total.toFixed(2)}</Text>
                 </View>
                 <View style={styles.actionWrap}>
-                    <Button
-                        mode="contained"
-                        buttonColor={colors.danger}
-                        onPress={() => dispatch(clearCart())} >Clear</Button>
+                    <TouchableOpacity
+                        style={[styles.bottomButton, styles.clearButton]}
+                        onPress={() => dispatch(clearCart())}
+                    >
+                        <Text style={styles.bottomButtonText}>Clear</Text>
+                    </TouchableOpacity>
                 </View>
                 <View style={styles.actionWrap}>
 
-                    <Button
-                        mode="contained"
-                        buttonColor={colors.success}
-                        onPress={handleCheckout}>Check Out</Button>
+                    <TouchableOpacity
+                        style={[styles.bottomButton, styles.checkoutButton]}
+                        onPress={handleCheckout}
+                    >
+                        <Text style={styles.bottomButtonText}>Check Out</Text>
+                    </TouchableOpacity>
                 </View>
 
             </View >
@@ -205,7 +212,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.sm,
         backgroundColor: colors.surface,
-        borderTopWidth: 1,
+        borderTopWidth: 2,
         borderTopColor: colors.border,
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -216,20 +223,36 @@ const styles = StyleSheet.create({
         color: colors.primary,
         fontWeight: '800',
     },
-    hiddenButton: {
+    rowBack: {
+        alignItems: 'center',
+        backgroundColor: colors.background,
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginHorizontal: spacing.md,
+        marginTop: spacing.md,
+    },
+    backRightBtn: {
+        width: 88,
+        height: '100%',
         backgroundColor: colors.danger,
-        justifyContent: 'center',
-        alignItems: 'flex-end',
-        paddingRight: 25,
-        height: 84,
-        width: width / 1.2,
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.danger,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    backText: {
+        color: 'white',
+        fontWeight: '700',
+        marginTop: 4,
     },
     listSurface: {
         flex: 1,
         width: '100%',
         backgroundColor: colors.background,
+    },
+    listContent: {
+        paddingBottom: 90,
     },
     card: {
         marginHorizontal: spacing.md,
@@ -282,6 +305,25 @@ const styles = StyleSheet.create({
     },
     actionWrap: {
         marginLeft: spacing.sm,
+    },
+    bottomButton: {
+        minWidth: 88,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        borderWidth: 2,
+        alignItems: 'center',
+    },
+    clearButton: {
+        backgroundColor: colors.danger,
+        borderColor: colors.danger,
+    },
+    checkoutButton: {
+        backgroundColor: colors.success,
+        borderColor: colors.success,
+    },
+    bottomButtonText: {
+        color: 'white',
+        fontWeight: '700',
     },
 });
 export default Cart

@@ -11,19 +11,18 @@ import {
 } from "react-native";
 // import { Input, VStack, Heading, Box } from "native-base"
 // import Icon from "react-native-vector-icons/FontAwesome"
-import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native"
 import { Searchbar } from 'react-native-paper';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import ListItem from "./ListItem"
 
 var { height, width } = Dimensions.get("window")
-import EasyButton from "../../Shared/StyledComponents/EasyButton";
 import { useNavigation } from "@react-navigation/native"
 import { colors, spacing } from "../../Shared/theme";
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteProduct as deleteProductAction, fetchProducts } from '../../Redux/Actions/productActions';
 import { getJwtToken } from "../../utils/tokenStorage";
+
 const Products = (props) => {
 
     const [productFilter, setProductFilter] = useState([]);
@@ -131,38 +130,19 @@ const Products = (props) => {
     }, [productList]);
     return (
         <View flex={1}>
-            <View style={styles.buttonContainer}>
-                <EasyButton
-                    secondary
-                    medium
-                    onPress={() => navigation.navigate("Orders")}
-                >
-                    <Ionicons name="bag-outline" size={18} color="white" />
-                    <Text style={styles.buttonText}>Orders</Text>
-                </EasyButton>
-                <EasyButton
-                    secondary
-                    medium
+            <View style={styles.searchRow}>
+                <Searchbar
+                    placeholder="Search"
+                    onChangeText={(text) => searchProduct(text)}
+                    style={styles.searchbar}
+                />
+                <TouchableOpacity
+                    style={styles.addProductSquareButton}
                     onPress={() => navigation.navigate("ProductForm")}
                 >
-                    <Ionicons name="add-outline" size={18} color="white" />
-                    <Text style={styles.buttonText}>Products</Text>
-                </EasyButton>
-                <EasyButton
-                    secondary
-                    medium
-                    onPress={() => navigation.navigate("Categories")}
-                >
-                    <Ionicons name="add-outline" size={18} color="white" />
-                    <Text style={styles.buttonText}>Categories</Text>
-                </EasyButton>
+                    <Text style={styles.addProductSquareButtonText}>+</Text>
+                </TouchableOpacity>
             </View>
-            <Searchbar width="80%"
-                placeholder="Search"
-                onChangeText={(text) => searchProduct(text)}
-            //   value={searchQuery}
-                style={styles.searchbar}
-            />
             {loading ? (
                 <View style={styles.spinner}>
                     <ActivityIndicator size="large" color="red" />
@@ -182,7 +162,15 @@ const Products = (props) => {
                 renderHiddenItem={renderHiddenItem}
                 leftOpenValue={0}
                 rightOpenValue={-160}
+                stopRightSwipe={-160}
                 disableLeftSwipe={false}
+                disableRightSwipe={true}
+                directionalDistanceChangeThreshold={4}
+                swipeToOpenPercent={12}
+                swipeToClosePercent={20}
+                swipeToOpenVelocityContribution={8}
+                closeOnRowPress={true}
+                closeOnScroll={true}
                 keyExtractor={(item) => item.id}
             />)}
 
@@ -212,30 +200,41 @@ const styles = StyleSheet.create({
         marginBottom: 160,
         backgroundColor: 'white'
     },
-    buttonContainer: {
-        margin: spacing.lg,
-        alignSelf: 'center',
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-    },
-    buttonText: {
-        marginLeft: 4,
-        color: 'white'
-    },
-    searchbar: {
+    searchRow: {
+        marginTop: spacing.md,
         marginHorizontal: spacing.lg,
         marginBottom: spacing.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+    },
+    searchbar: {
+        flex: 1,
         borderWidth: 2,
         borderColor: colors.border,
         borderRadius: 0,
+    },
+    addProductSquareButton: {
+        width: 50,
+        height: 50,
+        backgroundColor: colors.primary,
+        borderWidth: 2,
+        borderColor: colors.primary,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    addProductSquareButtonText: {
+        color: 'white',
+        fontWeight: '900',
+        fontSize: 28,
+        lineHeight: 30,
     },
     hiddenRow: {
         alignItems: 'center',
         flex: 1,
         flexDirection: 'row',
         justifyContent: 'flex-end',
-        marginHorizontal: spacing.md,
+        marginHorizontal: 0,
         marginBottom: 1,
     },
     hiddenButton: {

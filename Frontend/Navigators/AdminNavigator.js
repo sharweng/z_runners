@@ -1,6 +1,7 @@
 import React, { useContext } from "react"
 import { View, Text } from "react-native"
 import { createStackNavigator } from "@react-navigation/stack"
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs"
 
 import Orders from "../Screens/Admin/Orders"
 import Products from "../Screens/Admin/Products"
@@ -10,6 +11,25 @@ import AuthGlobal from "../Context/Store/AuthGlobal"
 import { colors } from "../Shared/theme"
 
 const Stack = createStackNavigator();
+const Tab = createMaterialTopTabNavigator();
+
+const AdminTabs = () => {
+    return (
+        <Tab.Navigator
+            swipeEnabled={false}
+            screenOptions={{
+                swipeEnabled: false,
+                tabBarStyle: { backgroundColor: colors.surface },
+                tabBarIndicatorStyle: { backgroundColor: colors.primary, height: 3 },
+                tabBarLabelStyle: { color: colors.text, fontWeight: '700' },
+            }}
+        >
+            <Tab.Screen name="Products" component={Products} />
+            <Tab.Screen name="Orders" component={Orders} />
+            <Tab.Screen name="Categories" component={Categories} />
+        </Tab.Navigator>
+    );
+};
 
 const AdminNavigator = () => {
     const context = useContext(AuthGlobal);
@@ -26,17 +46,21 @@ const AdminNavigator = () => {
     return (
         <Stack.Navigator>
             <Stack.Screen
-                name="Products"
-                component={Products}
+                name="AdminTabs"
+                component={AdminTabs}
                 options={{
-                    title: "Products",
+                    headerShown: false,
+                }}
+            />
+            <Stack.Screen
+                name="ProductForm"
+                component={ProductForm}
+                options={{
+                    title: 'Product Form',
                     headerStyle: { backgroundColor: colors.surface },
                     headerTintColor: colors.text,
                 }}
             />
-            <Stack.Screen name="Categories" component={Categories} options={{ headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }} />
-            <Stack.Screen name="Orders" component={Orders} options={{ headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }} />
-            <Stack.Screen name="ProductForm" component={ProductForm} options={{ headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }} />
         </Stack.Navigator>
     )
 }
