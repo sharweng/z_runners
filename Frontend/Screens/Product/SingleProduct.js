@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Image, View, StyleSheet, Text, ScrollView, TextInput, TouchableOpacity, Dimensions } from "react-native";
+import { Image, View, StyleSheet, Text, ScrollView, TextInput, TouchableOpacity, Dimensions, Modal, FlatList } from "react-native";
 import { Surface, } from "react-native-paper";
 import { Picker } from '@react-native-picker/picker';
 import Toast from 'react-native-toast-message';
@@ -11,7 +11,8 @@ import { fetchMyOrders } from '../../Redux/Actions/orderActions';
 import { deleteReview as deleteReviewAction, resetReviewSubmit, submitReview as submitReviewAction } from '../../Redux/Actions/reviewActions';
 import { getJwtToken } from '../../utils/tokenStorage';
 
-const { width } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const galleryWidth = screenWidth - (spacing.lg * 2) - 4;
 
 const toIdString = (value) => {
     if (!value) {
@@ -40,6 +41,8 @@ const SingleProduct = ({ route }) => {
     const [comment, setComment] = useState('');
     const [editingReviewId, setEditingReviewId] = useState(null);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const [viewerVisible, setViewerVisible] = useState(false);
+    const [viewerIndex, setViewerIndex] = useState(0);
     const [canReview, setCanReview] = useState(false);
     const context = useContext(AuthGlobal);
     const dispatch = useDispatch();
@@ -141,10 +144,25 @@ const SingleProduct = ({ route }) => {
         .filter(Boolean)
         .filter((value, index, arr) => arr.indexOf(value) === index);
 
+    const galleryImages = productImages.length
+        ? productImages
+        : ['https://cdn.pixabay.com/photo/2012/04/01/17/29/box-23649_960_720.png'];
+
     const onGalleryScroll = (event) => {
         const xOffset = event?.nativeEvent?.contentOffset?.x || 0;
-        const nextIndex = Math.round(xOffset / width);
+        const nextIndex = Math.round(xOffset / galleryWidth);
         setActiveImageIndex(nextIndex);
+    };
+
+    const onViewerScroll = (event) => {
+        const xOffset = event?.nativeEvent?.contentOffset?.x || 0;
+        const nextIndex = Math.round(xOffset / screenWidth);
+        setViewerIndex(nextIndex);
+    };
+
+    const openViewer = (index) => {
+        setViewerIndex(index);
+        setViewerVisible(true);
     };
 
     const submitReview = () => {
@@ -267,20 +285,24 @@ const SingleProduct = ({ route }) => {
                         showsHorizontalScrollIndicator={false}
                         onMomentumScrollEnd={onGalleryScroll}
                     >
-                        {(productImages.length ? productImages : ['https://cdn.pixabay.com/photo/2012/04/01/17/29/box-23649_960_720.png'])
-                            .map((imageUri) => (
-                                <Image
-                                    key={imageUri}
-                                    source={{ uri: imageUri }}
-                                    resizeMode="contain"
-                                    style={styles.image}
-                                />
+                        {galleryImages.map((imageUri, index) => (
+                                <TouchableOpacity
+                                    key={`${imageUri}-${index}`}
+                                    activeOpacity={0.95}
+                                    onPress={() => openViewer(index)}
+                                >
+                                    <Image
+                                        source={{ uri: imageUri }}
+                                        resizeMode="contain"
+                                        style={styles.image}
+                                    />
+                                </TouchableOpacity>
                             ))}
                     </ScrollView>
 
-                    {productImages.length > 1 ? (
+                    {galleryImages.length > 1 ? (
                         <View style={styles.dotsRow}>
-                            {productImages.map((imageUri, index) => (
+                            {galleryImages.map((imageUri, index) => (
                                 <View
                                     key={`${imageUri}-${index}`}
                                     style={[
@@ -293,6 +315,44 @@ const SingleProduct = ({ route }) => {
                     ) : null}
 
                 </View>
+                <Modal
+                    visible={viewerVisible}
+                    transparent={false}
+                    animationType="fade"
+                    onRequestClose={() => setViewerVisible(false)}
+                >
+                    <View style={styles.viewerBackdrop}>
+                        <View style={styles.viewerTopRow}>
+                            <Text style={styles.viewerCountText}>{viewerIndex + 1}/{galleryImages.length}</Text>
+                            <TouchableOpacity style={styles.viewerCloseButton} onPress={() => setViewerVisible(false)}>
+                                <Text style={styles.viewerCloseText}>Close</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <FlatList
+                            data={galleryImages}
+                            horizontal
+                            pagingEnabled
+                            initialScrollIndex={viewerIndex}
+                            getItemLayout={(_, index) => ({
+                                length: screenWidth,
+                                offset: screenWidth * index,
+                                index,
+                            })}
+                            keyExtractor={(imageUri, index) => `${imageUri}-${index}`}
+                            onMomentumScrollEnd={onViewerScroll}
+                            renderItem={({ item: imageUri }) => (
+                                <View style={styles.viewerSlide}>
+                                    <Image
+                                        source={{ uri: imageUri }}
+                                        style={styles.viewerImage}
+                                        resizeMode="contain"
+                                    />
+                                </View>
+                            )}
+                        />
+                    </View>
+                </Modal>
                 <View style={styles.contentContainer}>
                     <Text style={styles.contentHeader} size='xl'>{item.name}</Text>
                     <Text style={styles.contentText}>{item.brand}</Text>
@@ -414,8 +474,9 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     image: {
-        width,
+        width: galleryWidth,
         height: 280,
+        backgroundColor: colors.surfaceSoft,
     },
     dotsRow: {
         position: 'absolute',
@@ -559,6 +620,42 @@ const styles = StyleSheet.create({
     secondaryButtonText: {
         color: colors.text,
         fontWeight: '700',
+    },
+    viewerBackdrop: {
+        flex: 1,
+        backgroundColor: '#0B1320',
+        paddingTop: spacing.xl,
+    },
+    viewerTopRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: spacing.lg,
+        paddingBottom: spacing.md,
+    },
+    viewerCountText: {
+        color: colors.surface,
+        fontWeight: '700',
+    },
+    viewerCloseButton: {
+        borderWidth: 2,
+        borderColor: colors.surface,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.xs,
+    },
+    viewerCloseText: {
+        color: colors.surface,
+        fontWeight: '700',
+    },
+    viewerSlide: {
+        width: screenWidth,
+        height: screenHeight - 120,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    viewerImage: {
+        width: screenWidth,
+        height: screenHeight - 150,
     },
 })
 

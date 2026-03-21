@@ -18,7 +18,6 @@ var { height } = Dimensions.get('window');
 const ProductContainer = ({ route }) => {
     const [productsFiltered, setProductsFiltered] = useState([]);
     const [focus, setFocus] = useState(false);
-    const [searchVisible, setSearchVisible] = useState(false);
     const [active, setActive] = useState(-1);
     const [productsCtg, setProductsCtg] = useState([]);
     const [keyword, setKeyword] = useState('');
@@ -70,11 +69,7 @@ const ProductContainer = ({ route }) => {
 
     const searchProduct = (text) => {
         setKeyword(text);
-    };
-
-    const onBlur = () => {
-        setFocus(false);
-        setSearchVisible(false);
+        setFocus(text.trim().length > 0);
     };
 
     const changeCtg = (ctg) => {
@@ -83,18 +78,16 @@ const ProductContainer = ({ route }) => {
 
     useEffect(() => {
         if (route?.params?.openSearch) {
-            setSearchVisible(true);
-            setFocus(true);
             if (typeof route?.params?.headerSearchText === 'string') {
                 setKeyword(route.params.headerSearchText);
+                setFocus(route.params.headerSearchText.trim().length > 0);
             }
             return;
         }
 
-        setSearchVisible(false);
-        setFocus(false);
         if (route?.params?.headerSearchText === '') {
             setKeyword('');
+            setFocus(false);
         }
     }, [route?.params?.openSearch, route?.params?.headerSearchText]);
 
@@ -124,7 +117,6 @@ const ProductContainer = ({ route }) => {
             setMinPrice('');
             setMaxPrice('');
             setKeyword('');
-            setSearchVisible(false);
             dispatch(fetchProducts())
                 .catch((error) => {
                     console.log('Api call error', error);
@@ -141,7 +133,6 @@ const ProductContainer = ({ route }) => {
                 setMinPrice('');
                 setMaxPrice('');
                 setKeyword('');
-                setSearchVisible(false);
             };
         }, [dispatch])
     );
@@ -152,6 +143,25 @@ const ProductContainer = ({ route }) => {
 
     const renderFilters = () => (
         <View style={styles.filtersSection}>
+            <View style={styles.searchCard}>
+                <Ionicons name="search" size={18} color={colors.muted} />
+                <TextInput
+                    mode="flat"
+                    value={keyword}
+                    onChangeText={searchProduct}
+                    placeholder="Search by name, brand, or price"
+                    placeholderTextColor={colors.muted}
+                    style={styles.searchInput}
+                    underlineColor="transparent"
+                    activeUnderlineColor="transparent"
+                />
+                {keyword ? (
+                    <TouchableOpacity onPress={() => searchProduct('')} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                        <Ionicons name="close-circle" size={18} color={colors.muted} />
+                    </TouchableOpacity>
+                ) : null}
+            </View>
+
             <TouchableOpacity
                 style={styles.filterToggleButton}
                 activeOpacity={0.85}
@@ -170,22 +180,45 @@ const ProductContainer = ({ route }) => {
 
             {priceFilterExpanded ? (
                 <View style={styles.priceFilterContainer}>
-                    <TextInput
-                        mode="outlined"
-                        label="Min Price"
-                        value={minPrice}
-                        onChangeText={setMinPrice}
-                        keyboardType="numeric"
-                        style={styles.priceInput}
-                    />
-                    <TextInput
-                        mode="outlined"
-                        label="Max Price"
-                        value={maxPrice}
-                        onChangeText={setMaxPrice}
-                        keyboardType="numeric"
-                        style={styles.priceInput}
-                    />
+                    <View style={styles.priceField}>
+                        <Text style={styles.priceLabel}>MIN PRICE</Text>
+                        <View style={styles.priceInputRow}>
+                            <View style={styles.currencyBadge}>
+                                <Text style={styles.currencyText}>$</Text>
+                            </View>
+                            <TextInput
+                                mode="flat"
+                                value={minPrice}
+                                onChangeText={setMinPrice}
+                                keyboardType="numeric"
+                                placeholder="0"
+                                placeholderTextColor={colors.muted}
+                                style={styles.priceInput}
+                                underlineColor="transparent"
+                                activeUnderlineColor="transparent"
+                            />
+                        </View>
+                    </View>
+
+                    <View style={styles.priceField}>
+                        <Text style={styles.priceLabel}>MAX PRICE</Text>
+                        <View style={styles.priceInputRow}>
+                            <View style={styles.currencyBadge}>
+                                <Text style={styles.currencyText}>$</Text>
+                            </View>
+                            <TextInput
+                                mode="flat"
+                                value={maxPrice}
+                                onChangeText={setMaxPrice}
+                                keyboardType="numeric"
+                                placeholder="9999"
+                                placeholderTextColor={colors.muted}
+                                style={styles.priceInput}
+                                underlineColor="transparent"
+                                activeUnderlineColor="transparent"
+                            />
+                        </View>
+                    </View>
                 </View>
             ) : null}
 
@@ -203,10 +236,6 @@ const ProductContainer = ({ route }) => {
 
             {focus ? (
                 <View style={styles.focusContainer}>
-                    {searchVisible ? (
-                        <View style={styles.searchWrap} />
-                    ) : null}
-
                     <Banner />
                     <CategoryFilter
                         categories={categories}
@@ -219,10 +248,6 @@ const ProductContainer = ({ route }) => {
                 </View>
             ) : (
                 <ScrollView>
-                    {searchVisible ? (
-                        <View style={styles.searchWrap} />
-                    ) : null}
-
                     <Banner />
                     <CategoryFilter
                         categories={categories}
@@ -269,6 +294,23 @@ const styles = StyleSheet.create({
         borderTopColor: colors.border,
         paddingTop: spacing.md,
     },
+    searchCard: {
+        borderWidth: 2,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        paddingHorizontal: spacing.md,
+        minHeight: 50,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: spacing.md,
+        gap: spacing.xs,
+    },
+    searchInput: {
+        flex: 1,
+        backgroundColor: 'transparent',
+        color: colors.text,
+        paddingHorizontal: spacing.xs,
+    },
     filterToggleButton: {
         borderWidth: 2,
         borderColor: colors.border,
@@ -294,10 +336,44 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: spacing.md,
     },
+    priceField: {
+        flex: 1,
+    },
+    priceLabel: {
+        color: colors.muted,
+        fontWeight: '700',
+        fontSize: 11,
+        letterSpacing: 0.8,
+        marginBottom: spacing.xs,
+    },
+    priceInputRow: {
+        borderWidth: 2,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        minHeight: 52,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: spacing.sm,
+    },
+    currencyBadge: {
+        width: 28,
+        height: 28,
+        borderWidth: 2,
+        borderColor: colors.border,
+        backgroundColor: colors.surfaceSoft,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: spacing.xs,
+    },
+    currencyText: {
+        color: colors.primary,
+        fontWeight: '800',
+    },
     priceInput: {
         flex: 1,
-        backgroundColor: colors.surface,
-        borderRadius: 0,
+        backgroundColor: 'transparent',
+        color: colors.text,
+        paddingHorizontal: 0,
     },
     errorText: {
         color: colors.danger,

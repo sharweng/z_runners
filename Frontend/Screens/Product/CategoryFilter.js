@@ -7,7 +7,8 @@ const formatLabel = (value) => {
     return value
         .toString()
         .replace(/_/g, ' ')
-        .replace(/\b\w/g, (char) => char.toUpperCase());
+        .toLowerCase()
+        .replace(/(^|[\s-])([a-z])/g, (match, boundary, char) => `${boundary}${char.toUpperCase()}`);
 };
 
 const CategoryFilter = (props) => {
@@ -90,7 +91,6 @@ const styles = StyleSheet.create({
     chipText: {
         fontSize: 13,
         fontWeight: '700',
-        textTransform: 'capitalize',
     },
     activeText: {
         color: colors.surface,
