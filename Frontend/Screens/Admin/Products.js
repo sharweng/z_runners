@@ -20,7 +20,7 @@ import ListItem from "./ListItem"
 var { height, width } = Dimensions.get("window")
 import EasyButton from "../../Shared/StyledComponents/EasyButton";
 import { useNavigation } from "@react-navigation/native"
-import { colors, radius, spacing } from "../../Shared/theme";
+import { colors, spacing } from "../../Shared/theme";
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteProduct as deleteProductAction, fetchProducts } from '../../Redux/Actions/productActions';
 import { getJwtToken } from "../../utils/tokenStorage";
@@ -196,8 +196,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         padding: 5,
         backgroundColor: colors.surfaceSoft,
-        borderTopLeftRadius: radius.md,
-        borderTopRightRadius: radius.md,
+        borderBottomWidth: 2,
+        borderBottomColor: colors.border,
     },
     headerItem: {
         margin: 3,
@@ -213,9 +213,11 @@ const styles = StyleSheet.create({
         backgroundColor: 'white'
     },
     buttonContainer: {
-        margin: 20,
+        margin: spacing.lg,
         alignSelf: 'center',
-        flexDirection: 'row'
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
     },
     buttonText: {
         marginLeft: 4,
@@ -224,6 +226,9 @@ const styles = StyleSheet.create({
     searchbar: {
         marginHorizontal: spacing.lg,
         marginBottom: spacing.md,
+        borderWidth: 2,
+        borderColor: colors.border,
+        borderRadius: 0,
     },
     hiddenRow: {
         alignItems: 'center',

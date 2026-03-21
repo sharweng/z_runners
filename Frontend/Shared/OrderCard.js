@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 
 import TrafficLight from "./StyledComponents/TrafficLight";
 import EasyButton from "./StyledComponents/EasyButton";
 import Toast from "react-native-toast-message";
 import { Picker } from "@react-native-picker/picker";
 
-import { useNavigation } from '@react-navigation/native'
-import { colors, radius, shadow, spacing } from "./theme";
+import { colors, spacing } from "./theme";
 import { useDispatch } from 'react-redux';
 import { updateOrderStatus } from '../Redux/Actions/orderActions';
 import { getJwtToken } from "../utils/tokenStorage";
@@ -70,10 +69,9 @@ const OrderCard = ({
   item,
   update,
   compact = false,
-  onViewDetails,
-  onRateReview,
   onCancelOrder,
   onMarkDelivered,
+  onPressCard,
   onStatusUpdated,
   actionLoading = false,
 }) => {
@@ -118,7 +116,6 @@ const OrderCard = ({
     };
   }, [normalizedStatus]);
 
-  const navigation = useNavigation()
   const dispatch = useDispatch();
 
   const updateOrder = async () => {
@@ -154,8 +151,8 @@ const OrderCard = ({
       });
     }
   }
-  return (
-    <View style={[styles.container, { borderColor: statusMeta.cardColor }]}> 
+  const content = (
+    <View style={[styles.container, compact ? styles.compactContainer : null, { borderColor: statusMeta.cardColor }]}> 
       <View style={styles.header}>
         <Text style={styles.orderNumber}>Order #{item.id}</Text>
         <View style={styles.statusPill}>
@@ -186,7 +183,8 @@ const OrderCard = ({
             {normalizedStatus === 'pending' && onCancelOrder ? (
               <EasyButton
                 danger
-                medium
+                large
+                style={styles.fullWidthAction}
                 onPress={onCancelOrder}
                 disabled={actionLoading}
               >
@@ -196,29 +194,12 @@ const OrderCard = ({
             {normalizedStatus === 'shipped' && onMarkDelivered ? (
               <EasyButton
                 secondary
-                medium
+                large
+                style={styles.fullWidthAction}
                 onPress={onMarkDelivered}
                 disabled={actionLoading}
               >
                 <Text style={styles.actionText}>Mark Delivered</Text>
-              </EasyButton>
-            ) : null}
-            {normalizedStatus === 'delivered' && onRateReview ? (
-              <EasyButton
-                secondary
-                medium
-                onPress={onRateReview}
-              >
-                <Text style={styles.actionText}>Rate & Review</Text>
-              </EasyButton>
-            ) : null}
-            {onViewDetails ? (
-              <EasyButton
-                primary
-                medium
-                onPress={onViewDetails}
-              >
-                <Text style={styles.actionText}>View Details</Text>
               </EasyButton>
             ) : null}
           </View>
@@ -261,30 +242,41 @@ const OrderCard = ({
 
       </View>
     </View>
-
-
   );
+
+  if (!update && typeof onPressCard === 'function') {
+    return (
+      <TouchableOpacity activeOpacity={0.92} onPress={onPressCard}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return content;
 }
 
 const styles = StyleSheet.create({
   container: {
     padding: spacing.lg,
     margin: spacing.md,
-    borderRadius: radius.lg,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.border,
-    ...shadow,
+  },
+  compactContainer: {
+    padding: spacing.md,
+    margin: spacing.sm,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   orderNumber: {
     fontWeight: '800',
     color: colors.text,
+    fontSize: 13,
   },
   statusPill: {
     flexDirection: 'row',
@@ -292,8 +284,9 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
     backgroundColor: colors.surfaceSoft,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   statusText: {
     textTransform: 'capitalize',
@@ -305,6 +298,7 @@ const styles = StyleSheet.create({
   },
   meta: {
     color: colors.muted,
+    fontSize: 12,
   },
   priceContainer: {
     marginTop: spacing.sm,
@@ -324,10 +318,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   userActionsWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: spacing.md,
-    marginHorizontal: -6,
+    marginTop: spacing.sm,
+    marginHorizontal: 0,
+  },
+  fullWidthAction: {
+    width: '100%',
+    marginHorizontal: 0,
+    marginVertical: 0,
+    minHeight: 38,
   },
   actionText: {
     color: 'white',
@@ -340,7 +338,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     backgroundColor: colors.surfaceSoft,
-    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
     textAlign: 'center',
   },
 });

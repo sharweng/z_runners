@@ -1,9 +1,10 @@
 import React, { useContext } from 'react';
-import { Drawer } from 'react-native-paper';
-import { View, Text, StyleSheet } from 'react-native';
-import { colors, radius, spacing } from './theme';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { colors, spacing } from './theme';
 import AuthGlobal from '../Context/Store/AuthGlobal';
 import Toast from 'react-native-toast-message';
+import { logoutUser } from '../Context/Actions/Auth.actions';
 
 const DrawerContent = ({ navigation }) => {
   const context = useContext(AuthGlobal);
@@ -99,48 +100,48 @@ const DrawerContent = ({ navigation }) => {
     });
   };
 
+  const handleLogout = () => {
+    navigation.closeDrawer();
+    logoutUser(context.dispatch);
+    setTimeout(() => {
+      navigation.navigate('Zone Runners', {
+        screen: 'User',
+        params: { screen: 'Login' },
+      });
+    }, 140);
+  };
+
+  const Item = ({ label, icon, onPress }) => (
+    <TouchableOpacity style={styles.item} activeOpacity={0.85} onPress={onPress}>
+      <MaterialCommunityIcons name={icon} size={20} color={colors.primary} />
+      <Text style={styles.itemText}>{label}</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.brandBlock}>
-        <Text style={styles.brandName}>Zone Runners</Text>
-        <Text style={styles.brandTag}>Simple sports shopping</Text>
+        <Text style={styles.brandName}>ZONE RUNNERS</Text>
+        <Text style={styles.brandTag}>LIGHT SPORTS CATALOG</Text>
       </View>
-      <Drawer.Section>
-      <Drawer.Item
-        label="Home"
-        onPress={navigateToHome}
-        icon="home"
-      />
-      <Drawer.Item
-        label="Cart"
-        onPress={navigateToCart}
-        icon="cart"
-      />
+      <View style={styles.menuBlock}>
+      <Item label="Home" onPress={navigateToHome} icon="home-outline" />
+      <Item label="Cart" onPress={navigateToCart} icon="cart-outline" />
       {isAuthenticated && !isAdmin ? (
-        <Drawer.Item
-          label="My Orders"
-          onPress={navigateToMyOrders}
-          icon="receipt"
-        />
+        <Item label="My Orders" onPress={navigateToMyOrders} icon="receipt-text-outline" />
       ) : isAdmin ? (
-        <Drawer.Item
-          label="Admin"
-          onPress={navigateToAdmin}
-          icon="shield-account"
-        />
+        <Item label="Admin" onPress={navigateToAdmin} icon="shield-account-outline" />
       ) : null}
-      <Drawer.Item
-        label={profileLabel}
-        onPress={navigateToProfile}
-        icon={isAuthenticated ? 'account' : 'login'}
-      />
-      <Drawer.Item
-        label="Notifications"
-        onPress={() => {}}
-        icon="bell"
-      />
-
-      </Drawer.Section>
+      <Item label={profileLabel} onPress={navigateToProfile} icon={isAuthenticated ? 'account-outline' : 'login'} />
+      </View>
+      {isAuthenticated ? (
+        <View style={styles.footerBlock}>
+          <TouchableOpacity style={styles.logoutButton} activeOpacity={0.85} onPress={handleLogout}>
+            <MaterialCommunityIcons name="logout" size={20} color={colors.danger} />
+            <Text style={styles.logoutText}>LOGOUT</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
     </View>
   );
 };
@@ -149,23 +150,67 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.surface,
-    paddingTop: 48,
+    paddingTop: 56,
   },
   brandBlock: {
     marginHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
-    padding: spacing.lg,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceSoft,
+    marginBottom: spacing.sm,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 3,
+    borderBottomColor: colors.primary,
   },
   brandName: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
-    color: colors.text,
+    color: colors.primary,
+    letterSpacing: 1,
   },
   brandTag: {
-    marginTop: 4,
+    marginTop: 2,
+    fontSize: 12,
     color: colors.muted,
+    letterSpacing: 1,
+  },
+  menuBlock: {
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
+  },
+  item: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surfaceSoft,
+  },
+  itemText: {
+    color: colors.text,
+    fontWeight: '700',
+  },
+  footerBlock: {
+    marginTop: 'auto',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    marginHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  logoutButton: {
+    minHeight: 46,
+    borderWidth: 2,
+    borderColor: colors.danger,
+    backgroundColor: colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  logoutText: {
+    color: colors.danger,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
 });
 

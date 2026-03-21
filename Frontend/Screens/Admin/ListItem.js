@@ -8,6 +8,7 @@ import {
     Dimensions,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native"
+import { colors, spacing } from "../../Shared/theme";
 
 
 var { width } = Dimensions.get("window");
@@ -21,7 +22,7 @@ const ListItem = ({ item, index }) => {
                 navigation.navigate('Home', { screen: 'Product Detail', params: { item } })
             }}
             style={[styles.container, {
-                backgroundColor: index % 2 == 0 ? "white" : "gainsboro"
+                backgroundColor: index % 2 == 0 ? colors.surface : colors.surfaceSoft
             }]}
         >
             <Image
@@ -44,19 +45,21 @@ const ListItem = ({ item, index }) => {
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-        padding: 8,
-        width: width
+        padding: spacing.sm,
+        width: width,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
     },
     image: {
-        borderRadius: 50,
         width: width / 6,
-        height: 20,
+        height: 32,
         margin: 2
     },
     item: {
         flexWrap: "wrap",
         margin: 3,
-        width: width / 6
+        width: width / 6,
+        color: colors.text,
     },
 
 })

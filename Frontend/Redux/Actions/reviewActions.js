@@ -32,6 +32,27 @@ export const submitReview = (productId, payload, token, reviewId = null) => asyn
     }
 };
 
+export const deleteReview = (productId, reviewId, token) => async (dispatch) => {
+    dispatch({ type: REVIEW_SUBMIT_REQUEST });
+    try {
+        const config = {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        };
+
+        const endpoint = `${baseURL}products/${productId}/reviews/${reviewId}`;
+        const { data } = await axios.delete(endpoint, config);
+
+        dispatch({ type: REVIEW_SUBMIT_SUCCESS, payload: data });
+        return data;
+    } catch (error) {
+        const message = error?.response?.data || error.message;
+        dispatch({ type: REVIEW_SUBMIT_FAIL, payload: message });
+        throw error;
+    }
+};
+
 export const resetReviewSubmit = () => ({
     type: REVIEW_SUBMIT_RESET,
 });

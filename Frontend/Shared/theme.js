@@ -1,25 +1,25 @@
 import { Platform } from 'react-native';
 
 export const colors = {
-  background: '#F4F6F8',
+  background: '#F3F6FB',
   surface: '#FFFFFF',
-  surfaceSoft: '#EEF2F5',
-  border: '#D7DDE3',
-  text: '#102033',
-  muted: '#6B7280',
-  primary: '#1E3A5F',
-  accent: '#2F80ED',
-  accentSoft: '#E9F1FF',
-  success: '#1F8A70',
-  danger: '#C94B4B',
-  warning: '#C7892A',
+  surfaceSoft: '#E8EEF7',
+  border: '#C8D3E0',
+  text: '#0E2742',
+  muted: '#5E738B',
+  primary: '#0C4DA2',
+  accent: '#F57F17',
+  accentSoft: '#FFF3E0',
+  success: '#1B8D4E',
+  danger: '#C62828',
+  warning: '#C79B18',
 };
 
 export const radius = {
-  sm: 10,
-  md: 16,
-  lg: 24,
-  pill: 999,
+  sm: 0,
+  md: 0,
+  lg: 0,
+  pill: 0,
 };
 
 export const spacing = {
@@ -32,17 +32,15 @@ export const spacing = {
 
 export const shadow = {
   ...(Platform.OS === 'web'
-    ? {
-        boxShadow: '0px 8px 16px rgba(16, 32, 51, 0.08)',
-      }
+    ? {}
     : {
-        shadowColor: '#102033',
+        shadowColor: 'transparent',
         shadowOffset: {
           width: 0,
-          height: 8,
+          height: 0,
         },
-        shadowOpacity: 0.08,
-        shadowRadius: 16,
-        elevation: 4,
+        shadowOpacity: 0,
+        shadowRadius: 0,
+        elevation: 0,
       }),
 };

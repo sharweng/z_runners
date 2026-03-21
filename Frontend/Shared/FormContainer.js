@@ -1,6 +1,6 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing } from './theme';
+import { colors, spacing } from './theme';
 
 const FormContainer = ({children, title}) => {
     return (
@@ -31,18 +31,19 @@ const styles = StyleSheet.create({
     },
     title: {
         width: '100%',
-        fontSize: 28,
+        fontSize: 24,
         fontWeight: '800',
-        color: colors.text,
+        color: colors.primary,
         marginBottom: spacing.lg,
-        paddingHorizontal: spacing.xs,
+        borderLeftWidth: 4,
+        borderLeftColor: colors.accent,
+        paddingLeft: spacing.sm,
     },
     card: {
         width: '100%',
         backgroundColor: colors.surface,
-        borderRadius: radius.lg,
         padding: spacing.lg,
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.border,
     },
     helper: {

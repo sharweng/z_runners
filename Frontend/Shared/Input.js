@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextInput, StyleSheet } from 'react-native'
-import { colors, radius, spacing } from './theme';
+import { colors, spacing } from './theme';
 
 const Input = (props) => {
     return (
@@ -24,14 +24,14 @@ const Input = (props) => {
 const styles = StyleSheet.create({
     input: {
         width: '100%',
-        minHeight: 56,
+        minHeight: 52,
         backgroundColor: colors.surface,
         marginVertical: spacing.sm,
-        borderRadius: radius.md,
-        paddingHorizontal: spacing.lg,
-        borderWidth: 1,
+        paddingHorizontal: spacing.md,
+        borderWidth: 2,
         borderColor: colors.border,
         color: colors.text,
+        fontWeight: '500',
     },
 });
 

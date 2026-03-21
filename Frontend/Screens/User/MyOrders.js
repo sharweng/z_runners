@@ -87,10 +87,9 @@ const MyOrders = () => {
                     update={false}
                     compact
                     actionLoading={updating}
+                    onPressCard={() => navigation.navigate('Order Details', { order: item })}
                     onCancelOrder={() => onUpdateStatus(item, 'cancelled')}
                     onMarkDelivered={() => onUpdateStatus(item, 'delivered')}
-                    onRateReview={() => navigation.navigate('Order Details', { order: item, focusReview: true })}
-                    onViewDetails={() => navigation.navigate('Order Details', { order: item })}
                 />
             </View>
         );

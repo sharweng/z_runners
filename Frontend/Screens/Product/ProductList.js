@@ -41,11 +41,12 @@ const ProductList = (props) => {
 const styles = StyleSheet.create({
     wrapper: {
         width: '50%',
+        paddingHorizontal: 4,
     },
     inner: {
         width: '100%',
         backgroundColor: colors.background,
-        paddingHorizontal: 6,
+        paddingHorizontal: 2,
     },
 });
 

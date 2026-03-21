@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, ScrollView, View, Text } from 'react-native';
-import { colors, radius, spacing } from '../../Shared/theme';
+import { colors, spacing } from '../../Shared/theme';
 
 const formatLabel = (value) => {
     if (!value) return '';
@@ -11,7 +11,6 @@ const formatLabel = (value) => {
 };
 
 const CategoryFilter = (props) => {
-    console.log(props)
     return (
         <ScrollView
             bounces={true}
@@ -73,20 +72,19 @@ const styles = StyleSheet.create({
         gap: spacing.sm,
     },
     chip: {
-        minHeight: 38,
+        minHeight: 36,
         paddingHorizontal: spacing.md,
-        borderRadius: radius.pill,
         justifyContent: 'center',
         alignItems: 'center'
     },
     active: {
         backgroundColor: colors.primary,
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.primary,
     },
     inactive: {
         backgroundColor: colors.surfaceSoft,
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.border,
     },
     chipText: {

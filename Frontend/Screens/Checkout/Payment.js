@@ -5,7 +5,7 @@ import { Surface, RadioButton, Text } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 
 import { Picker } from '@react-native-picker/picker';
-import { colors, radius, spacing } from '../../Shared/theme';
+import { colors, spacing } from '../../Shared/theme';
 
 const methods = [
   { name: 'Cash on Delivery', value: 1 },
@@ -25,9 +25,7 @@ const Payment = ({ route }) => {
   const order = route?.params?.order;
   const quote = route?.params?.quote;
   const [selected, setSelected] = useState('');
-  const [status, setStatus] = useState('unchecked');
   const [card, setCard] = useState('');
-  console.log(order)
   const navigation = useNavigation()
   return (
     <View style={styles.container}  >
@@ -52,10 +50,8 @@ const Payment = ({ route }) => {
                 key={index}
                 value={item.value}
 
-                color='red'
+                color={colors.primary}
                 size="18"
-                // style={{ float: 'left' }}
-                // position='trailing'
                 label={item.name}
                 status='checked'
 
@@ -94,7 +90,7 @@ const Payment = ({ route }) => {
       <View style={{ marginTop: 60, alignSelf: 'center' }}>
         <Button
           color={colors.primary}
-          title={"Confirm"}
+          title={"CONFIRM PAYMENT"}
           onPress={() => {
             const paymentMethod = selected === 3 ? (card || 'Card') : (methods.find((m) => m.value === selected)?.name || 'Cash on Delivery');
             const paymentToken = `tok_${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -121,22 +117,28 @@ const styles = StyleSheet.create({
 
   },
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
-    color: colors.text,
+    color: colors.primary,
     marginBottom: spacing.lg,
+    alignSelf: 'flex-start',
+    width: '100%',
+    borderLeftWidth: 4,
+    borderLeftColor: colors.accent,
+    paddingLeft: spacing.sm,
   },
   card: {
     width: '100%',
-    borderRadius: radius.lg,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.border,
     marginBottom: spacing.md,
   },
   picker: {
     height: 56,
     width: '100%',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
 })
 export default Payment;

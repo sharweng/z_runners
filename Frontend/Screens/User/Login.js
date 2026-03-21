@@ -1,6 +1,6 @@
 
 import React, { useState, useContext, useEffect } from "react";
-import { View, Text, StyleSheet, Button, TextInput, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native'
 import { useNavigation } from '@react-navigation/native';
 import FormContainer from "../../Shared/FormContainer";
 import { Ionicons } from "@expo/vector-icons";
@@ -101,15 +101,20 @@ const Login = (props) => {
                 </TouchableOpacity>
             </View>
             <View style={styles.buttonGroup}>
-                <Button color={colors.accent} title="Login"
-                    onPress={() => handleSubmit()} />
+                <TouchableOpacity style={[styles.actionButton, styles.loginButton]} activeOpacity={0.85} onPress={() => handleSubmit()}>
+                    <Text style={styles.loginButtonText}>LOGIN</Text>
+                </TouchableOpacity>
             </View>
             <View style={styles.buttonGroup}>
                 <Text style={styles.middleText}>Dont' Have an Account yet?</Text>
-                <Button color={colors.primary} title="Register" onPress={() => navigation.navigate("Register")} />
+                <TouchableOpacity style={[styles.actionButton, styles.registerButton]} activeOpacity={0.85} onPress={() => navigation.navigate("Register")}>
+                    <Text style={styles.registerButtonText}>REGISTER</Text>
+                </TouchableOpacity>
             </View>
             <View style={styles.buttonGroup}>
-                <Button color={colors.muted} title="Continue as Guest" onPress={continueAsGuest} />
+                <TouchableOpacity style={[styles.actionButton, styles.guestButton]} activeOpacity={0.85} onPress={continueAsGuest}>
+                    <Text style={styles.guestButtonText}>CONTINUE AS GUEST</Text>
+                </TouchableOpacity>
             </View>
         </FormContainer>
     )
@@ -117,13 +122,12 @@ const Login = (props) => {
 const styles = StyleSheet.create({
     passwordContainer: {
         width: '100%',
-        minHeight: 56,
+        minHeight: 52,
         backgroundColor: colors.surface,
         marginVertical: spacing.sm,
-        borderRadius: 16,
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.border,
-        paddingHorizontal: spacing.lg,
+        paddingHorizontal: spacing.md,
         flexDirection: 'row',
         alignItems: 'center',
     },
@@ -141,10 +145,45 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginTop: spacing.sm,
     },
+    actionButton: {
+        width: '100%',
+        minHeight: 44,
+        borderWidth: 2,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    loginButton: {
+        backgroundColor: colors.primary,
+        borderColor: colors.primary,
+    },
+    registerButton: {
+        backgroundColor: colors.surface,
+        borderColor: colors.primary,
+    },
+    guestButton: {
+        backgroundColor: colors.surfaceSoft,
+        borderColor: colors.border,
+    },
+    loginButtonText: {
+        color: colors.surface,
+        fontWeight: '800',
+        letterSpacing: 0.8,
+    },
+    registerButtonText: {
+        color: colors.primary,
+        fontWeight: '800',
+        letterSpacing: 0.8,
+    },
+    guestButtonText: {
+        color: colors.text,
+        fontWeight: '800',
+        letterSpacing: 0.8,
+    },
     middleText: {
         marginVertical: spacing.md,
         alignSelf: "center",
-        color: colors.muted,
+        color: colors.primary,
+        fontWeight: '600',
     },
 });
 export default Login;

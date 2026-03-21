@@ -3,13 +3,12 @@ import { colors } from "../theme";
 
 const EasyButton = styled.TouchableOpacity`
     flex-direction: row;
-    border-radius: 999px;
-    padding: 12px 16px;
+    padding: 10px 14px;
     margin: 6px;
     justify-content: center;
     align-items: center;
     background: ${colors.surfaceSoft};
-    border: 1px solid ${colors.border};
+    border: 2px solid ${colors.border};
 
     ${(props) =>
         props.primary &&
@@ -52,7 +51,7 @@ const EasyButton = styled.TouchableOpacity`
     ${(props) => 
         props.small &&
         css`
-            min-width: 44px;
+            min-width: 38px;
         `
     }
 `;

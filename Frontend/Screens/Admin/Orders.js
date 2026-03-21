@@ -76,11 +76,12 @@ const styles = StyleSheet.create({
         marginHorizontal: spacing.md,
         marginBottom: spacing.sm,
         padding: spacing.sm,
-        borderRadius: 10,
-        backgroundColor: colors.primary,
+        borderWidth: 2,
+        borderColor: colors.primary,
+        backgroundColor: colors.surface,
     },
     notificationText: {
-        color: 'white',
+        color: colors.primary,
         fontWeight: '700',
     },
 });

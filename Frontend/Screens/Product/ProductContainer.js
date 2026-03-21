@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ActivityIndicator, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
-import { Surface, Text, TextInput, Searchbar } from 'react-native-paper';
+import { Surface, Text, TextInput } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,7 +9,7 @@ import Banner from '../../Shared/Banner';
 import CategoryFilter from './CategoryFilter';
 import ProductList from './ProductList';
 import SearchedProduct from './SearchedProduct';
-import { colors, radius, shadow, spacing } from '../../Shared/theme';
+import { colors, spacing } from '../../Shared/theme';
 import { fetchProducts } from '../../Redux/Actions/productActions';
 import { fetchCategories } from '../../Redux/Actions/categoryActions';
 
@@ -255,16 +255,6 @@ const styles = StyleSheet.create({
         backgroundColor: colors.background,
         paddingTop: spacing.md,
     },
-    searchbar: {
-        marginHorizontal: spacing.lg,
-        marginTop: spacing.sm,
-        marginBottom: spacing.md,
-        borderRadius: radius.lg,
-        backgroundColor: colors.surface,
-        borderWidth: 1,
-        borderColor: colors.border,
-        ...shadow,
-    },
     searchWrap: {
         paddingBottom: spacing.sm,
     },
@@ -274,15 +264,17 @@ const styles = StyleSheet.create({
     filtersSection: {
         paddingHorizontal: spacing.lg,
         marginTop: spacing.sm,
-        marginBottom: spacing.sm,
+        marginBottom: spacing.md,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+        paddingTop: spacing.md,
     },
     filterToggleButton: {
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.border,
         backgroundColor: colors.surface,
-        borderRadius: radius.md,
         paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
+        paddingVertical: spacing.md,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -294,8 +286,9 @@ const styles = StyleSheet.create({
         gap: spacing.xs,
     },
     filterToggleText: {
-        color: colors.text,
+        color: colors.primary,
         fontWeight: '700',
+        letterSpacing: 0.6,
     },
     priceFilterContainer: {
         flexDirection: 'row',
@@ -304,6 +297,7 @@ const styles = StyleSheet.create({
     priceInput: {
         flex: 1,
         backgroundColor: colors.surface,
+        borderRadius: 0,
     },
     errorText: {
         color: colors.danger,
@@ -317,7 +311,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         color: colors.muted,
-        fontWeight: '600',
+        fontWeight: '700',
     },
     listContainer: {
         flexDirection: 'row',

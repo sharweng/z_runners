@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Image, StyleSheet, Dimensions, View } from "react-native";
 import Swiper from "react-native-swiper";
-import { colors, radius, shadow } from "./theme";
+import { colors } from "./theme";
 
 var { width } = Dimensions.get("window");
 
@@ -10,9 +10,9 @@ const Banner = () => {
 
   useEffect(() => {
     setBannerData([
-      "https://images.vexels.com/media/users/3/126443/preview2/ff9af1e1edfa2c4a46c43b0c2040ce52-macbook-pro-touch-bar-banner.jpg",
-      "https://pbs.twimg.com/media/D7P_yLdX4AAvJWO.jpg",
-      "https://www.yardproduct.com/blog/wp-content/uploads/2016/01/gardening-banner.jpg",
+      "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=1200&q=80",
     ]);
 
     return () => {
@@ -64,11 +64,9 @@ const styles = StyleSheet.create({
   imageBanner: {
     height: 192,
     width: width,
-    borderRadius: 0,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.border,
-    ...shadow,
   },
   pagination: {
     bottom: 10,

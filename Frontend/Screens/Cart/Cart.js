@@ -1,16 +1,16 @@
 import React, { useCallback, useContext } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { Text, View, TouchableHighlight, StyleSheet, Dimensions, TouchableOpacity } from 'react-native'
+import { Text, View, TouchableHighlight, StyleSheet, Dimensions, TouchableOpacity, Image } from 'react-native'
 
 
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Icon from "react-native-vector-icons/FontAwesome";
 import { SwipeListView } from 'react-native-swipe-list-view';
 import { removeFromCart, clearCart, updateCartQuantity } from '../../Redux/Actions/cartActions'
-import { Surface, Divider, Avatar, Button } from 'react-native-paper';
+import { Surface, Button } from 'react-native-paper';
 var { height, width } = Dimensions.get("window");
 import { Ionicons } from "@expo/vector-icons";
-import { colors, radius, shadow, spacing } from '../../Shared/theme';
+import { colors, spacing } from '../../Shared/theme';
 import Toast from 'react-native-toast-message';
 import AuthGlobal from '../../Context/Store/AuthGlobal';
 
@@ -67,10 +67,13 @@ const Cart = () => {
         <TouchableHighlight>
             <Surface style={styles.card}>
 
-                <Avatar.Image size={48} source={{
-                    uri: item.image ?
-                        item.image : 'https://cdn.pixabay.com/photo/2012/04/01/17/29/box-23649_960_720.png'
-                }} />
+                <Image
+                    style={styles.itemImage}
+                    source={{
+                        uri: item.image ?
+                            item.image : 'https://cdn.pixabay.com/photo/2012/04/01/17/29/box-23649_960_720.png'
+                    }}
+                />
 
                 <Text style={styles.itemName}>
                     {item.name}
@@ -86,7 +89,6 @@ const Cart = () => {
                     </TouchableOpacity>
                 </View>
 
-                <Divider />
                 <Text style={styles.price}>
                     $ {(Number(item?.price) || 0).toFixed(2)}
                 </Text>
@@ -207,7 +209,6 @@ const styles = StyleSheet.create({
         borderTopColor: colors.border,
         alignItems: 'center',
         justifyContent: 'space-between',
-        ...shadow,
     },
     price: {
         fontSize: 18,
@@ -222,7 +223,8 @@ const styles = StyleSheet.create({
         paddingRight: 25,
         height: 84,
         width: width / 1.2,
-        borderRadius: radius.md,
+        borderWidth: 1,
+        borderColor: colors.danger,
     },
     listSurface: {
         flex: 1,
@@ -233,21 +235,18 @@ const styles = StyleSheet.create({
         marginHorizontal: spacing.md,
         marginTop: spacing.md,
         padding: spacing.md,
-        borderRadius: radius.lg,
         backgroundColor: colors.surface,
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.border,
         flexDirection: 'row',
         alignItems: 'center',
         gap: spacing.md,
-        ...shadow,
     },
     qtyWrap: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.border,
-        borderRadius: radius.pill,
         overflow: 'hidden',
         marginRight: spacing.sm,
     },
@@ -271,11 +270,18 @@ const styles = StyleSheet.create({
         color: colors.text,
         fontWeight: '700',
     },
+    itemImage: {
+        width: 52,
+        height: 52,
+        borderWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: colors.surfaceSoft,
+    },
     totalWrap: {
         minWidth: 90,
     },
     actionWrap: {
         marginLeft: spacing.sm,
-    }
+    },
 });
 export default Cart

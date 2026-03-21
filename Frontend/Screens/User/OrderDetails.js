@@ -1,14 +1,12 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import Toast from 'react-native-toast-message';
-import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 
-import { colors, radius, shadow, spacing } from '../../Shared/theme';
+import { colors, spacing } from '../../Shared/theme';
 import { fetchProductsByIds } from '../../Redux/Actions/productActions';
-import { submitReview } from '../../Redux/Actions/reviewActions';
 import { getJwtToken } from '../../utils/tokenStorage';
 import AuthGlobal from '../../Context/Store/AuthGlobal';
 import baseURL from '../../constants/baseurl';
@@ -31,14 +29,6 @@ const formatDate = (rawDate) => {
   return parsed.toLocaleString();
 };
 
-const getItemTotal = (item, resolvedProducts) => {
-  const quantity = Number(item?.quantity) || 0;
-  const productId = getProductId(item);
-  const hydratedPrice = productId ? resolvedProducts?.[productId]?.price : undefined;
-  const unitPrice = Number(item?.product?.price ?? hydratedPrice ?? item?.unitPrice) || 0;
-  return quantity * unitPrice;
-};
-
 const getProductId = (item) => {
   const source = item?.product ?? item?.productId;
 
@@ -50,9 +40,9 @@ const getProductId = (item) => {
     return source;
   }
 
-   if (typeof source === 'object' && typeof source?.$oid === 'string') {
+  if (typeof source === 'object' && typeof source?.$oid === 'string') {
     return source.$oid;
-   }
+  }
 
   const nested = source.id || source._id || null;
   if (!nested) {
@@ -92,33 +82,9 @@ const normalizeStatus = (status) => {
   return value || 'pending';
 };
 
-const formatReviewDate = (rawDate) => {
-  if (!rawDate) {
-    return 'N/A';
-  }
-
-  const parsed = new Date(rawDate);
-  if (Number.isNaN(parsed.getTime())) {
-    return 'N/A';
-  }
-
-  return parsed.toLocaleDateString();
-};
-
-const buildStars = (rating) => {
-  const score = Math.min(5, Math.max(1, Number(rating) || 0));
-  const filled = '★'.repeat(Math.round(score));
-  const empty = '☆'.repeat(5 - Math.round(score));
-  return `${filled}${empty}`;
-};
-
-const getAverageRating = (reviews = []) => {
-  if (!Array.isArray(reviews) || reviews.length === 0) {
-    return 0;
-  }
-
-  const total = reviews.reduce((sum, review) => sum + (Number(review?.rating) || 0), 0);
-  return total / reviews.length;
+const toTitleCase = (value) => {
+  const normalized = normalizeStatus(value);
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 };
 
 const OrderDetails = ({ route }) => {
@@ -126,20 +92,12 @@ const OrderDetails = ({ route }) => {
   const authContext = useContext(AuthGlobal);
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const {
-    byId: byIdProducts,
-    byIdLoading,
-    byIdError,
-  } = useSelector((state) => state.products);
+  const { byId: byIdProducts, byIdLoading, byIdError } = useSelector((state) => state.products);
+
   const [resolvedProducts, setResolvedProducts] = useState({});
   const [resolvedOrder, setResolvedOrder] = useState(order);
-  const [reviewDrafts, setReviewDrafts] = useState({});
-  const [submittingReviews, setSubmittingReviews] = useState({});
 
-  const currentUserId = authContext?.stateUser?.user?.userId || null;
   const displayOrder = resolvedOrder || order;
-  const isDeliveredOrder = normalizeStatus(displayOrder?.status) === 'delivered';
-
   const orderItems = useMemo(() => {
     if (!Array.isArray(displayOrder?.orderItems)) {
       return [];
@@ -178,7 +136,7 @@ const OrderDetails = ({ route }) => {
           setResolvedOrder(response.data);
         }
       } catch (error) {
-        // Keep route order data as a fallback when refetch fails.
+        // Keep fallback order payload from route.
       }
     };
 
@@ -193,23 +151,16 @@ const OrderDetails = ({ route }) => {
     let isMounted = true;
 
     const hydrateProducts = async () => {
-      const productIdsToLoad = orderItems
+      const productIds = orderItems
         .map((item) => getProductId(item))
-        .filter((productId, index, list) => {
-          if (!productId || list.indexOf(productId) !== index) {
-            return false;
-          }
+        .filter((productId, index, list) => productId && list.indexOf(productId) === index);
 
-          const product = orderItems.find((orderItem) => getProductId(orderItem) === productId)?.product;
-          return !(product && typeof product === 'object' && product.name);
-        });
-
-      if (!productIdsToLoad.length) {
+      if (!productIds.length) {
         return;
       }
 
       try {
-        const productMap = await dispatch(fetchProductsByIds(productIdsToLoad));
+        const productMap = await dispatch(fetchProductsByIds(productIds));
 
         if (!isMounted) {
           return;
@@ -217,7 +168,7 @@ const OrderDetails = ({ route }) => {
 
         setResolvedProducts((prev) => ({ ...prev, ...productMap }));
       } catch (error) {
-        // Product might be removed from catalog; keep graceful fallback UI.
+        // Some products may be unavailable.
       }
     };
 
@@ -243,7 +194,7 @@ const OrderDetails = ({ route }) => {
         topOffset: 60,
         type: 'error',
         text1: 'Product unavailable',
-        text2: 'Unable to open product details for this item.',
+        text2: 'Unable to open this product.',
       });
       return;
     }
@@ -259,88 +210,8 @@ const OrderDetails = ({ route }) => {
 
   const getProductSnapshot = (item) => {
     const productId = getProductId(item);
-    const hydratedProduct = productId ? resolvedProducts[productId] : null;
-    return item?.product && typeof item.product === 'object' ? item.product : hydratedProduct;
-  };
-
-  const getDraft = (productId) => {
-    const existing = reviewDrafts[productId];
-    if (existing) {
-      return existing;
-    }
-
-    return {
-      rating: 5,
-      comment: '',
-    };
-  };
-
-  const updateDraft = (productId, patch) => {
-    setReviewDrafts((prev) => ({
-      ...prev,
-      [productId]: {
-        ...getDraft(productId),
-        ...patch,
-      },
-    }));
-  };
-
-  const submitProductReview = async (productId, existingReviewId = null) => {
-    const draft = getDraft(productId);
-    const token = await getJwtToken();
-
-    if (!token) {
-      Toast.show({
-        topOffset: 60,
-        type: 'error',
-        text1: 'Login required',
-        text2: 'Please login to submit a review.',
-      });
-      return;
-    }
-
-    if (!draft.comment || !String(draft.comment).trim()) {
-      Toast.show({
-        topOffset: 60,
-        type: 'error',
-        text1: 'Comment required',
-        text2: 'Please write a short review comment.',
-      });
-      return;
-    }
-
-    setSubmittingReviews((prev) => ({ ...prev, [productId]: true }));
-
-    try {
-      await dispatch(
-        submitReview(
-          productId,
-          {
-            rating: Number(draft.rating) || 5,
-            comment: String(draft.comment).trim(),
-          },
-          token,
-          existingReviewId
-        )
-      );
-
-      await dispatch(fetchProductsByIds([productId]));
-      Toast.show({
-        topOffset: 60,
-        type: 'success',
-        text1: existingReviewId ? 'Review updated' : 'Review submitted',
-      });
-    } catch (error) {
-      const message = error?.response?.data?.message || error?.response?.data || error?.message || 'Unable to submit review';
-      Toast.show({
-        topOffset: 60,
-        type: 'error',
-        text1: 'Review failed',
-        text2: `${message}`,
-      });
-    } finally {
-      setSubmittingReviews((prev) => ({ ...prev, [productId]: false }));
-    }
+    const hydrated = productId ? resolvedProducts[productId] : null;
+    return item?.product && typeof item.product === 'object' ? item.product : hydrated;
   };
 
   if (!displayOrder) {
@@ -355,7 +226,7 @@ const OrderDetails = ({ route }) => {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.card}>
         <Text style={styles.title}>Order #{displayOrder.id}</Text>
-        <Text style={styles.meta}>Status: {normalizeStatus(displayOrder.status)}</Text>
+        <Text style={styles.meta}>Status: {toTitleCase(displayOrder.status)}</Text>
         <Text style={styles.meta}>Placed: {formatDate(displayOrder.dateOrdered)}</Text>
         <Text style={styles.meta}>Total: {formatMoney(displayOrder.totalPrice)}</Text>
       </View>
@@ -372,107 +243,40 @@ const OrderDetails = ({ route }) => {
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Items</Text>
-        {isDeliveredOrder ? (
-          <Text style={styles.meta}>You can rate and review purchased items below.</Text>
-        ) : (
-          <Text style={styles.meta}>Review and rating are enabled after this order is delivered.</Text>
-        )}
         {byIdLoading ? <Text style={styles.meta}>Loading product details...</Text> : null}
         {byIdError ? <Text style={styles.errorText}>Some product details could not be loaded.</Text> : null}
         {orderItems.length === 0 ? <Text style={styles.meta}>No line items available.</Text> : null}
-        {orderItems.map((item, index) => (
-          <View key={item?.id || `${displayOrder.id}-item-${index}`}>
-            {index > 0 ? <View style={styles.separator} /> : null}
-            <View style={styles.itemRow}>
-              <View style={styles.itemLeft}>
-                {(() => {
-                  const productId = getProductId(item);
-                  const productData = getProductSnapshot(item);
-                  const productName = productData?.name || item?.name || 'Product unavailable';
 
-                  if (productId) {
-                    return (
-                      <TouchableOpacity onPress={() => openProductDetails(productId, productData || {})} activeOpacity={0.7}>
-                        <Text style={[styles.itemName, styles.linkText]}>{productName}</Text>
-                      </TouchableOpacity>
-                    );
-                  }
+        {orderItems.map((item, index) => {
+          const productId = getProductId(item);
+          const productData = getProductSnapshot(item);
+          const productName = productData?.name || item?.name || 'Product unavailable';
+          const productBrand = productData?.brand || item?.brand || 'N/A';
+          const productImage = productData?.image || item?.image || 'https://cdn.pixabay.com/photo/2012/04/01/17/29/box-23649_960_720.png';
+          const quantity = Number(item?.quantity) || 0;
+          const unitPrice = Number(item?.product?.price ?? productData?.price ?? item?.unitPrice) || 0;
+          const lineTotal = unitPrice * quantity;
 
-                  return <Text style={styles.itemName}>{productName}</Text>;
-                })()}
-                <Text style={styles.itemMeta}>Qty: {Number(item?.quantity) || 0}</Text>
-                <Text style={styles.itemMeta}>Unit: {formatMoney(item?.product?.price ?? resolvedProducts[getProductId(item)]?.price ?? item?.unitPrice)}</Text>
-
-                {(() => {
-                  const productId = getProductId(item);
-                  if (!productId) {
-                    return null;
-                  }
-
-                  const productData = getProductSnapshot(item);
-                  const reviews = Array.isArray(productData?.reviews) ? productData.reviews : [];
-                  const existingReview = currentUserId
-                    ? reviews.find((review) => String(review?.user) === String(currentUserId))
-                    : null;
-                  const draft = getDraft(productId);
-                  const isSubmitting = !!submittingReviews[productId];
-
-                  return (
-                    <View style={styles.reviewWrap}>
-                      <Text style={styles.reviewTitle}>Ratings & Reviews ({reviews.length})</Text>
-                      {reviews.length > 0 ? (
-                        <Text style={styles.reviewSummary}>
-                          {buildStars(getAverageRating(reviews))} {getAverageRating(reviews).toFixed(1)}/5
-                        </Text>
-                      ) : null}
-                      {reviews.length === 0 ? <Text style={styles.reviewEmpty}>No reviews yet.</Text> : null}
-                      {reviews.map((review) => (
-                        <View key={review?._id || `${productId}-${review?.user}-${review?.dateCreated}`} style={styles.reviewItem}>
-                          <Text style={styles.reviewHeader}>{review?.name || 'User'} - {buildStars(review?.rating)} ({Number(review?.rating) || 0}/5)</Text>
-                          <Text style={styles.reviewComment}>{review?.comment || ''}</Text>
-                          <Text style={styles.reviewDate}>{formatReviewDate(review?.dateUpdated || review?.dateCreated)}</Text>
-                        </View>
-                      ))}
-
-                      {isDeliveredOrder ? (
-                        <View style={styles.reviewForm}>
-                          <Text style={styles.reviewFormTitle}>{existingReview ? 'Update Your Review' : 'Add Your Review'}</Text>
-                          <Picker
-                            style={styles.reviewPicker}
-                            selectedValue={draft.rating}
-                            onValueChange={(value) => updateDraft(productId, { rating: Number(value) })}
-                          >
-                            <Picker.Item label="5 - Excellent" value={5} />
-                            <Picker.Item label="4 - Good" value={4} />
-                            <Picker.Item label="3 - Average" value={3} />
-                            <Picker.Item label="2 - Fair" value={2} />
-                            <Picker.Item label="1 - Poor" value={1} />
-                          </Picker>
-                          <TextInput
-                            style={styles.reviewInput}
-                            placeholder="Write your review"
-                            placeholderTextColor={colors.muted}
-                            value={draft.comment}
-                            multiline
-                            onChangeText={(text) => updateDraft(productId, { comment: text })}
-                          />
-                          <TouchableOpacity
-                            style={[styles.reviewButton, isSubmitting ? styles.reviewButtonDisabled : null]}
-                            disabled={isSubmitting}
-                            onPress={() => submitProductReview(productId, existingReview?._id || null)}
-                          >
-                            <Text style={styles.reviewButtonText}>{isSubmitting ? 'Submitting...' : existingReview ? 'Update Review' : 'Submit Review'}</Text>
-                          </TouchableOpacity>
-                        </View>
-                      ) : null}
-                    </View>
-                  );
-                })()}
-              </View>
-              <Text style={styles.itemTotal}>{formatMoney(getItemTotal(item, resolvedProducts))}</Text>
+          return (
+            <View key={item?.id || `${displayOrder.id}-item-${index}`}>
+              {index > 0 ? <View style={styles.separator} /> : null}
+              <TouchableOpacity
+                activeOpacity={0.88}
+                style={styles.itemRow}
+                onPress={() => openProductDetails(productId, productData || {})}
+              >
+                <Image source={{ uri: productImage }} style={styles.itemImage} resizeMode="cover" />
+                <View style={styles.itemDetails}>
+                  <Text style={styles.itemName} numberOfLines={1}>{productName}</Text>
+                  <Text style={styles.itemMeta} numberOfLines={1}>{productBrand}</Text>
+                  <Text style={styles.itemMeta}>Qty: {quantity}</Text>
+                  <Text style={styles.itemMeta}>Unit: {formatMoney(unitPrice)}</Text>
+                </View>
+                <Text style={styles.itemTotal}>{formatMoney(lineTotal)}</Text>
+              </TouchableOpacity>
             </View>
-          </View>
-        ))}
+          );
+        })}
       </View>
     </ScrollView>
   );
@@ -490,11 +294,9 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
     padding: spacing.lg,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.border,
-    ...shadow,
   },
   title: {
     fontSize: 18,
@@ -520,100 +322,32 @@ const styles = StyleSheet.create({
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
   },
-  itemLeft: {
+  itemImage: {
+    width: 64,
+    height: 64,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceSoft,
+  },
+  itemDetails: {
     flex: 1,
   },
   itemName: {
     color: colors.text,
     fontWeight: '700',
-    marginBottom: spacing.xs,
-  },
-  linkText: {
-    textDecorationLine: 'underline',
+    marginBottom: 2,
   },
   itemMeta: {
     color: colors.muted,
+    fontSize: 12,
   },
   itemTotal: {
     color: colors.primary,
     fontWeight: '800',
-  },
-  reviewWrap: {
-    marginTop: spacing.sm,
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  reviewTitle: {
-    color: colors.text,
-    fontWeight: '700',
-    marginBottom: spacing.xs,
-  },
-  reviewSummary: {
-    color: colors.primary,
-    fontWeight: '700',
-    marginBottom: spacing.xs,
-  },
-  reviewEmpty: {
-    color: colors.muted,
-    marginBottom: spacing.xs,
-  },
-  reviewItem: {
-    paddingVertical: spacing.xs,
-  },
-  reviewHeader: {
-    color: colors.text,
-    fontWeight: '700',
-  },
-  reviewComment: {
-    color: colors.text,
-  },
-  reviewDate: {
-    color: colors.muted,
-    fontSize: 12,
-  },
-  reviewForm: {
-    marginTop: spacing.sm,
-    backgroundColor: colors.surfaceSoft,
-    borderRadius: radius.md,
-    padding: spacing.sm,
-  },
-  reviewFormTitle: {
-    color: colors.text,
-    fontWeight: '700',
-    marginBottom: spacing.xs,
-  },
-  reviewPicker: {
-    backgroundColor: colors.surface,
-    marginBottom: spacing.sm,
-  },
-  reviewInput: {
-    minHeight: 72,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    color: colors.text,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    textAlignVertical: 'top',
-  },
-  reviewButton: {
-    marginTop: spacing.sm,
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
-  },
-  reviewButtonDisabled: {
-    opacity: 0.7,
-  },
-  reviewButtonText: {
-    color: '#fff',
-    fontWeight: '700',
+    fontSize: 14,
   },
   errorText: {
     color: colors.danger,

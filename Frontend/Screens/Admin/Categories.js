@@ -8,7 +8,7 @@ import {
     StyleSheet
 } from "react-native"
 import EasyButton from "../../Shared/StyledComponents/EasyButton";
-import { colors, radius, shadow, spacing } from "../../Shared/theme";
+import { colors, spacing } from "../../Shared/theme";
 import baseURL from "../../constants/baseurl";
 import axios from "axios";
 import { getJwtToken } from "../../utils/tokenStorage";
@@ -141,7 +141,9 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         position: "absolute",
         bottom: 0,
-        left: 0
+        left: 0,
+        borderTopWidth: 2,
+        borderTopColor: colors.border,
     },
     bottomTitle: {
         fontWeight: '700',
@@ -150,8 +152,7 @@ const styles = StyleSheet.create({
     input: {
         height: 44,
         borderColor: colors.border,
-        borderWidth: 1,
-        borderRadius: radius.md,
+        borderWidth: 2,
         paddingHorizontal: spacing.sm,
         backgroundColor: colors.surfaceSoft,
     },
@@ -163,10 +164,8 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        borderRadius: radius.md,
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.border,
-        ...shadow,
     }
 })
 

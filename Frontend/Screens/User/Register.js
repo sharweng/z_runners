@@ -12,7 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import mime from "mime";
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from "expo-image-picker"
-import { colors, radius, shadow, spacing } from "../../Shared/theme";
+import { colors, spacing } from "../../Shared/theme";
 const countries = require("../../data/countries.json");
 
 const Register = (props) => {
@@ -245,19 +245,20 @@ const styles = StyleSheet.create({
     },
     screenTitle: {
         fontSize: 28,
-        fontWeight: '700',
-        color: colors.text,
+        fontWeight: '800',
+        color: colors.primary,
         marginBottom: spacing.lg,
+        borderLeftWidth: 4,
+        borderLeftColor: colors.accent,
+        paddingLeft: spacing.sm,
     },
     card: {
         width: '100%',
         backgroundColor: colors.surface,
-        borderRadius: radius.md,
         padding: spacing.lg,
         marginBottom: spacing.lg,
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.border,
-        ...shadow,
     },
     sectionTitle: {
         fontSize: 18,
@@ -270,10 +271,9 @@ const styles = StyleSheet.create({
         width: 180,
         height: 180,
         borderStyle: "solid",
-        borderWidth: 1,
+        borderWidth: 2,
         padding: 0,
         justifyContent: "center",
-        borderRadius: 90,
         borderColor: colors.border,
         backgroundColor: colors.surface,
         marginBottom: spacing.md,
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     image: {
         width: "100%",
         height: "100%",
-        borderRadius: 90
+        borderRadius: 0,
     },
     imagePicker: {
         position: "absolute",
@@ -289,7 +289,6 @@ const styles = StyleSheet.create({
         bottom: 5,
         backgroundColor: colors.primary,
         padding: 8,
-        borderRadius: 100,
         elevation: 20
     },
     buttonRow: {
@@ -300,7 +299,8 @@ const styles = StyleSheet.create({
     },
     smallButton: {
         flex: 1,
-        borderRadius: radius.pill,
+        borderWidth: 2,
+        borderColor: colors.border,
         paddingVertical: spacing.md,
         alignItems: 'center',
         justifyContent: 'center',
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     },
     actionButton: {
         width: '100%',
-        borderRadius: radius.pill,
+        borderWidth: 2,
         paddingVertical: spacing.lg,
         alignItems: 'center',
         justifyContent: 'center',

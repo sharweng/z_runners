@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useRef } from 'react'
 import { View, StyleSheet, Dimensions, ScrollView, Button, Text, ActivityIndicator } from "react-native";
-import { Surface, Avatar, Divider } from 'react-native-paper';
+import { Surface } from 'react-native-paper';
 
 
 import { useNavigation } from '@react-navigation/native';
@@ -10,7 +10,7 @@ var { width, height } = Dimensions.get("window");
 import Toast from 'react-native-toast-message';
 import { clearCart } from '../../Redux/Actions/cartActions';
 import { createOrder } from '../../Redux/Actions/orderActions';
-import { colors, radius, shadow, spacing } from '../../Shared/theme';
+import { colors, spacing } from '../../Shared/theme';
 import { clearSavedCartItems } from '../Cart/cartStorage';
 import { getJwtToken } from '../../utils/tokenStorage';
 const Confirm = (props) => {
@@ -139,17 +139,9 @@ const Confirm = (props) => {
                             {liveOrder.orderItems?.map((item) => {
                                 return (
                                     <Surface key={item.id} style={styles.itemCard}>
-
-                                        <Avatar.Image size={48} source={{
-                                            uri: item.image ?
-                                                item.image : 'https://cdn.pixabay.com/photo/2012/04/01/17/29/box-23649_960_720.png'
-                                        }} />
-
                                         <Text style={styles.itemName}>
                                             {item.name}
                                         </Text>
-
-                                        <Divider />
                                         <Text style={styles.itemPrice}>
                                             $ {(Number(item?.price) || 0).toFixed(2)} x {Number(item?.quantity) || 1}
                                         </Text>
@@ -209,17 +201,15 @@ const styles = StyleSheet.create({
         alignSelf: "center",
         margin: 8,
         fontSize: 18,
-        fontWeight: "bold",
-        color: colors.text,
+        fontWeight: "800",
+        color: colors.primary,
     },
     card: {
         width: width / 1.05,
-        borderRadius: radius.lg,
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.border,
         backgroundColor: colors.surface,
         padding: spacing.md,
-        ...shadow,
     },
     cardBody: {
         margin: 10,
@@ -230,8 +220,12 @@ const styles = StyleSheet.create({
     itemCard: {
         marginTop: spacing.md,
         padding: spacing.md,
-        borderRadius: radius.md,
+        borderWidth: 1,
+        borderColor: colors.border,
         backgroundColor: colors.surfaceSoft,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
     },
     itemName: {
         fontWeight: '700',

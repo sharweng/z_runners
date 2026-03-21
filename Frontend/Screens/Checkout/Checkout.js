@@ -230,7 +230,7 @@ const Checkout = (props) => {
 
 
                 <View style={{ width: '80%', alignItems: "center" }}>
-                    <Button color={colors.accent} title={quoteLoading ? 'Validating...' : 'Confirm'} onPress={() => checkOut()} disabled={quoteLoading} />
+                    <Button color={colors.primary} title={quoteLoading ? 'VALIDATING...' : 'CONFIRM SHIPPING'} onPress={() => checkOut()} disabled={quoteLoading} />
                 </View>
             </FormContainer>
         </KeyboardAwareScrollView>
@@ -243,6 +243,8 @@ const styles = StyleSheet.create({
         width: '100%',
         backgroundColor: colors.surface,
         marginTop: spacing.sm,
+        borderWidth: 2,
+        borderColor: colors.border,
     },
 });
 

@@ -1,71 +1,103 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions, } from 'react-native'
-
-import { FlatList, TouchableOpacity } from 'react-native';
-import { Surface, Text, Avatar, Divider } from 'react-native-paper';
+import { View, StyleSheet, Dimensions, FlatList, TouchableOpacity, Image, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-var { width } = Dimensions.get("window")
+import { colors, spacing } from '../../Shared/theme';
 
-const SearchedProduct = ({ productsFiltered }) => {
+var { width } = Dimensions.get('window');
+
+const SearchedProduct = ({ productsFiltered = [] }) => {
     const navigation = useNavigation();
+
+    const renderItem = ({ item }) => (
+        <TouchableOpacity
+            activeOpacity={0.85}
+            style={styles.row}
+            onPress={() => navigation.navigate('Product Detail', { item })}
+        >
+            <Image
+                style={styles.thumb}
+                resizeMode="cover"
+                source={{
+                    uri: item?.image || 'https://cdn.pixabay.com/photo/2012/04/01/17/29/box-23649_960_720.png',
+                }}
+            />
+            <View style={styles.metaWrap}>
+                <Text style={styles.name} numberOfLines={1}>{item?.name || 'Unnamed Product'}</Text>
+                <Text style={styles.desc} numberOfLines={2}>{item?.description || 'No description available'}</Text>
+                <Text style={styles.price}>${(Number(item?.price) || 0).toFixed(2)}</Text>
+            </View>
+        </TouchableOpacity>
+    );
+
     return (
-
-        <View style={{ width: width }}>
+        <View style={styles.container}>
             {productsFiltered.length > 0 ? (
-
-                <Surface >
-                    <FlatList
-                        data={productsFiltered}
-                        renderItem={({ item }) =>
-                            <TouchableOpacity
-                                style={{ width: '50%' }}
-                                onPress={() => navigation.navigate("Product Detail", { item })}
-                            >
-                                <Surface width="90%">
-                                    <Avatar.Image size={24}
-                                        source={{
-                                            uri: item.image ?
-                                                item.image : 'https://cdn.pixabay.com/photo/2012/04/01/17/29/box-23649_960_720.png'
-                                        }} />
-                                    <Text variant="labelMedium">{item.name}</Text>
-                                    <Text variant="labelMedium">{item.description}</Text>
-                                    <Divider />
-                                    <Text variant="labelMedium">
-                                        {item.price}
-                                    </Text>
-                                </Surface>
-
-                            </TouchableOpacity>}
-
-                        keyExtractor={(item) => item.id || item._id} />
-                </Surface >
+                <FlatList
+                    data={productsFiltered}
+                    renderItem={renderItem}
+                    keyExtractor={(item, index) => String(item?.id || item?._id || index)}
+                    contentContainerStyle={styles.listContent}
+                />
             ) : (
                 <View style={styles.center}>
-                    <Text style={{ alignSelf: 'center' }}>
-                        No products match the selected criteria
-                    </Text>
+                    <Text style={styles.emptyText}>No products match the selected criteria</Text>
                 </View>
             )}
-        </View >
-
+        </View>
     );
 };
 
-
 const styles = StyleSheet.create({
-    center: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: 100
+    container: {
+        width,
+        paddingHorizontal: spacing.lg,
     },
-    listContainer: {
-        // height: height,
+    listContent: {
+        paddingBottom: spacing.lg,
+    },
+    row: {
+        flexDirection: 'row',
+        backgroundColor: colors.surface,
+        borderWidth: 2,
+        borderColor: colors.border,
+        marginBottom: spacing.sm,
+    },
+    thumb: {
+        width: 84,
+        height: 84,
+        borderRightWidth: 1,
+        borderRightColor: colors.border,
+        backgroundColor: colors.surfaceSoft,
+    },
+    metaWrap: {
         flex: 1,
-        flexDirection: "row",
-        alignItems: "flex-start",
-        flexWrap: "wrap",
-        backgroundColor: "gainsboro",
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
     },
-})
+    name: {
+        color: colors.text,
+        fontWeight: '800',
+        marginBottom: 2,
+    },
+    desc: {
+        color: colors.muted,
+        fontSize: 12,
+        marginBottom: spacing.xs,
+    },
+    price: {
+        color: colors.primary,
+        fontSize: 16,
+        fontWeight: '800',
+    },
+    center: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 100,
+    },
+    emptyText: {
+        color: colors.muted,
+        fontWeight: '700',
+    },
+});
 
 export default SearchedProduct;

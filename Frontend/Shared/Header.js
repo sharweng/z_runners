@@ -1,7 +1,7 @@
 import React from "react"
 import { StyleSheet, Image, View, Text } from "react-native"
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radius, shadow, spacing } from './theme';
+import { colors, spacing } from './theme';
 
 const Header = () => {
     return (
@@ -27,9 +27,8 @@ const styles = StyleSheet.create({
     header: {
         width: '100%',
         backgroundColor: colors.surface,
-        borderBottomWidth: 1,
+        borderBottomWidth: 2,
         borderBottomColor: colors.border,
-        ...shadow,
         paddingHorizontal: spacing.lg,
         paddingVertical: spacing.md,
     },
@@ -41,10 +40,11 @@ const styles = StyleSheet.create({
     logoWrap: {
         width: 44,
         height: 44,
-        borderRadius: radius.md,
         backgroundColor: colors.surfaceSoft,
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: colors.border,
     },
     logo: {
         width: 28,
@@ -53,7 +53,8 @@ const styles = StyleSheet.create({
     brandName: {
         fontSize: 18,
         fontWeight: '800',
-        color: colors.text,
+        color: colors.primary,
+        letterSpacing: 1,
     },
     brandTag: {
         marginTop: 2,

@@ -3,11 +3,11 @@ import { Image, View, StyleSheet, Text, ScrollView, TextInput, TouchableOpacity,
 import { Surface, } from "react-native-paper";
 import Toast from 'react-native-toast-message';
 import AuthGlobal from '../../Context/Store/AuthGlobal';
-import { colors, radius, shadow, spacing } from "../../Shared/theme";
+import { colors, spacing } from "../../Shared/theme";
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProductDetails } from '../../Redux/Actions/productActions';
 import { fetchMyOrders } from '../../Redux/Actions/orderActions';
-import { resetReviewSubmit, submitReview as submitReviewAction } from '../../Redux/Actions/reviewActions';
+import { deleteReview as deleteReviewAction, resetReviewSubmit, submitReview as submitReviewAction } from '../../Redux/Actions/reviewActions';
 import { getJwtToken } from '../../utils/tokenStorage';
 
 const { width } = Dimensions.get('window');
@@ -45,6 +45,10 @@ const SingleProduct = ({ route }) => {
     const { selected } = useSelector((state) => state.products);
 
     const currentUserId = context?.stateUser?.user?.userId;
+    const reviews = Array.isArray(item?.reviews) ? item.reviews : [];
+    const userReview = reviews.find((review) => String(review?.user) === String(currentUserId));
+    const showUpdateForm = !!editingReviewId;
+    const canWriteNewReview = canReview && !userReview;
 
     const loadProduct = () => {
         if (!routeProductId) {
@@ -215,6 +219,42 @@ const SingleProduct = ({ route }) => {
         setComment(review.comment || '');
     };
 
+    const deleteReview = (reviewId) => {
+        if (!reviewId) {
+            return;
+        }
+
+        getJwtToken()
+            .then((token) => {
+                if (!token) {
+                    throw new Error('Not authenticated');
+                }
+
+                return dispatch(deleteReviewAction(item.id, reviewId, token));
+            })
+            .then(() => {
+                Toast.show({
+                    topOffset: 60,
+                    type: 'success',
+                    text1: 'Review deleted',
+                });
+                setEditingReviewId(null);
+                setComment('');
+                setRating('5');
+                dispatch(resetReviewSubmit());
+                loadProduct();
+            })
+            .catch((error) => {
+                const message = error?.response?.data || error?.message || 'Something went wrong';
+                Toast.show({
+                    topOffset: 60,
+                    type: 'error',
+                    text1: 'Unable to delete review',
+                    text2: `${message}`,
+                });
+            });
+    };
+
 
     return (
         <Surface style={styles.container}>
@@ -263,22 +303,27 @@ const SingleProduct = ({ route }) => {
                     <Text style={styles.reviewTitle}>Reviews</Text>
                     <Text style={styles.reviewMeta}>Average: {Number(item.rating || 0).toFixed(1)} ({item.numReviews || 0})</Text>
 
-                    {item.reviews?.map((review) => (
+                    {reviews.map((review) => (
                         <View key={review._id} style={styles.reviewItem}>
                             <Text style={styles.reviewAuthor}>{review.name}</Text>
                             <Text style={styles.reviewMeta}>Rating: {review.rating}/5</Text>
                             <Text style={styles.description}>{review.comment}</Text>
-                            {canReview && currentUserId && review.user === currentUserId && (
-                                <TouchableOpacity style={styles.inlineButton} onPress={() => editReview(review)}>
-                                    <Text style={styles.inlineButtonText}>Edit My Review</Text>
-                                </TouchableOpacity>
+                            {canReview && currentUserId && String(review.user) === String(currentUserId) && (
+                                <View style={styles.reviewActionsRow}>
+                                    <TouchableOpacity style={[styles.inlineHalfButton, styles.editButton]} onPress={() => editReview(review)}>
+                                        <Text style={styles.inlineButtonText}>Edit Review</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.inlineHalfButton, styles.deleteButton]} onPress={() => deleteReview(review._id)}>
+                                        <Text style={styles.inlineButtonText}>Delete Review</Text>
+                                    </TouchableOpacity>
+                                </View>
                             )}
                         </View>
                     ))}
 
-                    {canReview ? (
+                    {showUpdateForm ? (
                         <>
-                            <Text style={styles.reviewTitle}>{editingReviewId ? 'Update Your Review' : 'Write a Review'}</Text>
+                            <Text style={styles.reviewTitle}>Update Your Review</Text>
                             <TextInput
                                 value={rating}
                                 onChangeText={setRating}
@@ -296,12 +341,44 @@ const SingleProduct = ({ route }) => {
                                 style={[styles.input, styles.textArea]}
                             />
                             <TouchableOpacity style={styles.primaryButton} onPress={submitReview}>
-                                <Text style={styles.primaryButtonText}>{editingReviewId ? 'Update Review' : 'Submit Review'}</Text>
+                                <Text style={styles.primaryButtonText}>Update Review</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.secondaryButton} onPress={() => {
+                                setEditingReviewId(null);
+                                setComment('');
+                                setRating('5');
+                            }}>
+                                <Text style={styles.secondaryButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </>
+                    ) : canWriteNewReview ? (
+                        <>
+                            <Text style={styles.reviewTitle}>Write a Review</Text>
+                            <TextInput
+                                value={rating}
+                                onChangeText={setRating}
+                                keyboardType="numeric"
+                                placeholder="Rating (1 to 5)"
+                                placeholderTextColor={colors.muted}
+                                style={styles.input}
+                            />
+                            <TextInput
+                                value={comment}
+                                onChangeText={setComment}
+                                placeholder="Write your review"
+                                placeholderTextColor={colors.muted}
+                                multiline
+                                style={[styles.input, styles.textArea]}
+                            />
+                            <TouchableOpacity style={styles.primaryButton} onPress={submitReview}>
+                                <Text style={styles.primaryButtonText}>Submit Review</Text>
                             </TouchableOpacity>
                         </>
                     ) : (
                         <Text style={styles.reviewEligibilityText}>
-                            Write a Review becomes available after you have a delivered order for this product.
+                            {userReview
+                                ? 'You already reviewed this product. Use Edit Review to make changes.'
+                                : 'Write a Review becomes available after you have a delivered order for this product.'}
                         </Text>
                     )}
                 </View>
@@ -321,10 +398,8 @@ const styles = StyleSheet.create({
     },
     heroWrap: {
         backgroundColor: colors.surface,
-        borderRadius: radius.lg,
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.border,
-        ...shadow,
         overflow: 'hidden',
     },
     image: {
@@ -340,10 +415,11 @@ const styles = StyleSheet.create({
         gap: spacing.xs,
     },
     dot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
+        width: 10,
+        height: 10,
         backgroundColor: 'rgba(255,255,255,0.6)',
+        borderWidth: 1,
+        borderColor: colors.border,
     },
     dotActive: {
         backgroundColor: colors.primary,
@@ -356,7 +432,7 @@ const styles = StyleSheet.create({
     contentHeader: {
         fontWeight: 'bold',
         fontSize: 24,
-        color: colors.text,
+        color: colors.primary,
         marginBottom: spacing.xs,
     },
     contentText: {
@@ -367,11 +443,10 @@ const styles = StyleSheet.create({
     },
     detailCard: {
         backgroundColor: colors.surface,
-        borderRadius: radius.lg,
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.border,
         padding: spacing.lg,
-        ...shadow,
+        marginBottom: spacing.md,
     },
     description: {
         color: colors.text,
@@ -393,9 +468,8 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
     reviewItem: {
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.border,
-        borderRadius: radius.md,
         padding: spacing.md,
         marginBottom: spacing.sm,
         backgroundColor: colors.surfaceSoft,
@@ -406,9 +480,8 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xs,
     },
     input: {
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.border,
-        borderRadius: radius.md,
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.sm,
         marginBottom: spacing.sm,
@@ -421,7 +494,8 @@ const styles = StyleSheet.create({
     },
     primaryButton: {
         backgroundColor: colors.primary,
-        borderRadius: radius.md,
+        borderWidth: 2,
+        borderColor: colors.primary,
         paddingVertical: spacing.sm,
         alignItems: 'center',
     },
@@ -429,16 +503,41 @@ const styles = StyleSheet.create({
         color: 'white',
         fontWeight: '700',
     },
-    inlineButton: {
+    reviewActionsRow: {
         marginTop: spacing.sm,
-        alignSelf: 'flex-start',
+        flexDirection: 'row',
+        gap: spacing.sm,
+    },
+    inlineHalfButton: {
+        flex: 1,
         backgroundColor: colors.primary,
-        borderRadius: radius.pill,
-        paddingHorizontal: spacing.md,
+        borderWidth: 2,
+        borderColor: colors.primary,
         paddingVertical: spacing.xs,
+        alignItems: 'center',
+    },
+    editButton: {
+        backgroundColor: colors.primary,
+        borderColor: colors.primary,
+    },
+    deleteButton: {
+        backgroundColor: colors.danger,
+        borderColor: colors.danger,
     },
     inlineButtonText: {
         color: 'white',
+        fontWeight: '700',
+    },
+    secondaryButton: {
+        marginTop: spacing.sm,
+        borderWidth: 2,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        paddingVertical: spacing.sm,
+        alignItems: 'center',
+    },
+    secondaryButtonText: {
+        color: colors.text,
         fontWeight: '700',
     },
 })
