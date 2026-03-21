@@ -124,17 +124,25 @@ export const fetchProductsByIds = (ids = []) => async (dispatch) => {
 
     dispatch({ type: PRODUCT_BY_ID_REQUEST });
     try {
-        const responses = await Promise.all(
+        const responses = await Promise.allSettled(
             uniqueIds.map(async (id) => {
                 const { data } = await axios.get(`${baseURL}products/${id}`);
                 return { id, data };
             })
         );
 
-        const productMap = responses.reduce((acc, current) => {
-            acc[current.id] = current.data;
-            return acc;
-        }, {});
+        const productMap = responses
+            .filter((result) => result.status === 'fulfilled')
+            .map((result) => result.value)
+            .reduce((acc, current) => {
+                acc[current.id] = current.data;
+                return acc;
+            }, {});
+
+        if (Object.keys(productMap).length === 0) {
+            const failed = responses.find((result) => result.status === 'rejected');
+            throw failed?.reason || new Error('Unable to load product details');
+        }
 
         dispatch({ type: PRODUCT_BY_ID_SUCCESS, payload: productMap });
         return productMap;

@@ -35,12 +35,12 @@ const getItemTotal = (item, resolvedProducts) => {
   const quantity = Number(item?.quantity) || 0;
   const productId = getProductId(item);
   const hydratedPrice = productId ? resolvedProducts?.[productId]?.price : undefined;
-  const unitPrice = Number(item?.product?.price ?? hydratedPrice) || 0;
+  const unitPrice = Number(item?.product?.price ?? hydratedPrice ?? item?.unitPrice) || 0;
   return quantity * unitPrice;
 };
 
 const getProductId = (item) => {
-  const source = item?.product || item?.id || item?._id;
+  const source = item?.product ?? item?.productId;
 
   if (!source) {
     return null;
@@ -388,7 +388,7 @@ const OrderDetails = ({ route }) => {
                 {(() => {
                   const productId = getProductId(item);
                   const productData = getProductSnapshot(item);
-                  const productName = productData?.name || 'Product unavailable';
+                  const productName = productData?.name || item?.name || 'Product unavailable';
 
                   if (productId) {
                     return (
@@ -401,7 +401,7 @@ const OrderDetails = ({ route }) => {
                   return <Text style={styles.itemName}>{productName}</Text>;
                 })()}
                 <Text style={styles.itemMeta}>Qty: {Number(item?.quantity) || 0}</Text>
-                <Text style={styles.itemMeta}>Unit: {formatMoney(item?.product?.price || resolvedProducts[getProductId(item)]?.price)}</Text>
+                <Text style={styles.itemMeta}>Unit: {formatMoney(item?.product?.price ?? resolvedProducts[getProductId(item)]?.price ?? item?.unitPrice)}</Text>
 
                 {(() => {
                   const productId = getProductId(item);
