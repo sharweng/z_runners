@@ -22,7 +22,7 @@ const paymentCards = [
 
 const Payment = ({ route }) => {
 
-  const order = route.params;
+  const order = route?.params?.order;
   const [selected, setSelected] = useState('');
   const [status, setStatus] = useState('unchecked');
   const [card, setCard] = useState('');

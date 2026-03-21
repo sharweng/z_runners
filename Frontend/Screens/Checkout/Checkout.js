@@ -9,6 +9,9 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { useSelector } from 'react-redux'
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import axios from 'axios'
+import baseURL from '../../constants/baseurl'
 
 const countries = require("../../data/countries.json");
 import AuthGlobal from '../../Context/Store/AuthGlobal'
@@ -42,12 +45,75 @@ const Checkout = (props) => {
             });
         }
 
+        if (cartItems.length === 0) {
+            Toast.show({
+                topOffset: 60,
+                type: "error",
+                text1: "Your cart is empty",
+                text2: "Add products before checkout",
+            });
+            navigation.navigate('Cart Screen', { screen: 'Cart' });
+        }
+
         return () => {
             setOrderItems();
         }
     }, [])
 
+    useEffect(() => {
+        if (!context.stateUser.isAuthenticated || !context?.stateUser?.user?.userId) {
+            return;
+        }
+
+        let isMounted = true;
+
+        const loadProfileIntoCheckout = async () => {
+            try {
+                const token = await AsyncStorage.getItem('jwt');
+                if (!token) {
+                    return;
+                }
+
+                const response = await axios.get(
+                    `${baseURL}users/${context.stateUser.user.userId}`,
+                    {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }
+                );
+
+                if (!isMounted || !response?.data) {
+                    return;
+                }
+
+                const profile = response.data;
+                setPhone(profile.phone || '');
+                setAddress(profile.street || '');
+                setCity(profile.city || '');
+                setCountry(profile.country || 'Philippines');
+            } catch (error) {
+                // Keep manual checkout fields editable when profile fetch fails.
+            }
+        };
+
+        loadProfileIntoCheckout();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [context?.stateUser?.isAuthenticated, context?.stateUser?.user?.userId]);
+
     const checkOut = async () => {
+        if (!orderItems || orderItems.length === 0) {
+            Toast.show({
+                topOffset: 60,
+                type: "error",
+                text1: "Your cart is empty",
+                text2: "Add products before checkout",
+            });
+            navigation.navigate('Cart Screen', { screen: 'Cart' });
+            return;
+        }
+
         console.log("orders", orderItems)
         const ownerKey = user ? `user:${user}` : 'guest';
         await replaceSavedCartItems(ownerKey, orderItems);

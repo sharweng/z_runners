@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 
 import TrafficLight from "./StyledComponents/TrafficLight";
 import EasyButton from "./StyledComponents/EasyButton";
@@ -13,17 +12,97 @@ import { colors, radius, shadow, spacing } from "./theme";
 import { useDispatch } from 'react-redux';
 import { updateOrderStatus } from '../Redux/Actions/orderActions';
 
-const codes = [
+const adminCodes = [
   { name: "pending", code: "pending" },
   { name: "shipped", code: "shipped" },
-  { name: "delivered", code: "delivered" },
+  { name: "cancelled", code: "cancelled" },
 ];
-const OrderCard = ({ item, update }) => {
-  console.log(item)
-  const [orderStatus, setOrderStatus] = useState('');
-  const [statusText, setStatusText] = useState('');
-  const [statusChange, setStatusChange] = useState(item.status === "ongoing" ? "pending" : item.status);
-  const [cardColor, setCardColor] = useState('');
+
+const normalizeStatus = (status) => {
+  if (status === '3' || status === 'ongoing') {
+    return 'pending';
+  }
+
+  if (status === '2') {
+    return 'shipped';
+  }
+
+  if (status === '1') {
+    return 'delivered';
+  }
+
+  if (status === 'canceled') {
+    return 'cancelled';
+  }
+
+  return status;
+};
+
+const getFormattedDate = (dateRaw) => {
+  if (!dateRaw) {
+    return "N/A";
+  }
+
+  const parsed = new Date(dateRaw);
+  if (Number.isNaN(parsed.getTime())) {
+    return "N/A";
+  }
+
+  return parsed.toLocaleDateString();
+};
+
+const getItemCount = (orderItems) => {
+  if (!Array.isArray(orderItems)) {
+    return 0;
+  }
+
+  return orderItems.reduce((count, current) => count + (Number(current?.quantity) || 0), 0);
+};
+
+const OrderCard = ({
+  item,
+  update,
+  compact = false,
+  onViewDetails,
+  onCancelOrder,
+  onMarkDelivered,
+  actionLoading = false,
+}) => {
+  const normalizedStatus = normalizeStatus(item.status);
+  const [statusChange, setStatusChange] = useState(normalizedStatus || 'pending');
+  const itemCount = getItemCount(item.orderItems);
+
+  const statusMeta = useMemo(() => {
+    if (normalizedStatus === 'pending') {
+      return {
+        label: 'pending',
+        cardColor: '#E74C3C',
+        light: <TrafficLight unavailable></TrafficLight>,
+      };
+    }
+
+    if (normalizedStatus === 'shipped') {
+      return {
+        label: 'shipped',
+        cardColor: '#F1C40F',
+        light: <TrafficLight limited></TrafficLight>,
+      };
+    }
+
+    if (normalizedStatus === 'cancelled') {
+      return {
+        label: 'cancelled',
+        cardColor: '#95A5A6',
+        light: <TrafficLight unavailable></TrafficLight>,
+      };
+    }
+
+    return {
+      label: 'delivered',
+      cardColor: '#2ECC71',
+      light: <TrafficLight available></TrafficLight>,
+    };
+  }, [normalizedStatus]);
 
   const navigation = useNavigation()
   const dispatch = useDispatch();
@@ -53,47 +132,66 @@ const OrderCard = ({ item, update }) => {
         });
       });
   }
-  useEffect(() => {
-    if (item.status == "3" || item.status === "pending" || item.status === "ongoing") {
-      setOrderStatus(<TrafficLight unavailable></TrafficLight>);
-      setStatusText("pending");
-      setCardColor("#E74C3C");
-    } else if (item.status == "2" || item.status === "shipped") {
-      setOrderStatus(<TrafficLight limited></TrafficLight>);
-      setStatusText("shipped");
-      setCardColor("#F1C40F");
-    } else {
-      setOrderStatus(<TrafficLight available></TrafficLight>);
-      setStatusText("delivered");
-      setCardColor("#2ECC71");
-    }
-
-    return () => {
-      setOrderStatus();
-      setStatusText();
-      setCardColor();
-    };
-  }, []);
-
   return (
-
-    <View style={[styles.container, { borderColor: cardColor }]}> 
+    <View style={[styles.container, { borderColor: statusMeta.cardColor }]}> 
       <View style={styles.header}>
         <Text style={styles.orderNumber}>Order #{item.id}</Text>
         <View style={styles.statusPill}>
-          <Text style={styles.statusText}>{statusText}</Text>
-          {orderStatus}
+          <Text style={styles.statusText}>{statusMeta.label}</Text>
+          {statusMeta.light}
         </View>
       </View>
       <View style={styles.body}>
-        <Text style={styles.meta}>Address: {item.shippingAddress1} {item.shippingAddress2}</Text>
-        <Text style={styles.meta}>City: {item.city}</Text>
-        <Text style={styles.meta}>Country: {item.country}</Text>
-        <Text style={styles.meta}>Date Ordered: {item.dateOrdered.split("T")[0]}</Text>
+        {compact ? (
+          <>
+            <Text style={styles.meta}>Date Ordered: {getFormattedDate(item.dateOrdered)}</Text>
+            <Text style={styles.meta}>Items: {itemCount}</Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.meta}>Address: {item.shippingAddress1} {item.shippingAddress2}</Text>
+            <Text style={styles.meta}>City: {item.city}</Text>
+            <Text style={styles.meta}>Country: {item.country}</Text>
+            <Text style={styles.meta}>Date Ordered: {getFormattedDate(item.dateOrdered)}</Text>
+          </>
+        )}
         <View style={styles.priceContainer}>
           <Text style={styles.meta}>Price</Text>
           <Text style={styles.price}>$ {item.totalPrice}</Text>
         </View>
+        {!update ? (
+          <View style={styles.userActionsWrap}>
+            {normalizedStatus === 'pending' && onCancelOrder ? (
+              <EasyButton
+                danger
+                medium
+                onPress={onCancelOrder}
+                disabled={actionLoading}
+              >
+                <Text style={styles.actionText}>Cancel Order</Text>
+              </EasyButton>
+            ) : null}
+            {normalizedStatus === 'shipped' && onMarkDelivered ? (
+              <EasyButton
+                secondary
+                medium
+                onPress={onMarkDelivered}
+                disabled={actionLoading}
+              >
+                <Text style={styles.actionText}>Mark Delivered</Text>
+              </EasyButton>
+            ) : null}
+            {onViewDetails ? (
+              <EasyButton
+                primary
+                medium
+                onPress={onViewDetails}
+              >
+                <Text style={styles.actionText}>View Details</Text>
+              </EasyButton>
+            ) : null}
+          </View>
+        ) : null}
         {update ? <View>
           <>
             <Picker
@@ -102,7 +200,7 @@ const OrderCard = ({ item, update }) => {
               dropdownIconColor={colors.primary}
               onValueChange={(e) => setStatusChange(e)}
             >
-              {codes.map((c) => {
+              {adminCodes.map((c) => {
                 return <Picker.Item
                   key={c.code}
                   label={c.name}
@@ -185,6 +283,16 @@ const styles = StyleSheet.create({
   actionButton: {
     alignSelf: 'flex-start',
     marginTop: spacing.sm,
+  },
+  userActionsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: spacing.md,
+    marginHorizontal: -6,
+  },
+  actionText: {
+    color: 'white',
+    fontWeight: '700',
   },
 });
 

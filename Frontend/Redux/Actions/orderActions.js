@@ -42,3 +42,37 @@ export const updateOrderStatus = (orderId, status, token) => async (dispatch) =>
         throw error;
     }
 };
+
+export const fetchMyOrders = (userId, token) => async (dispatch) => {
+    dispatch({ type: ORDERS_REQUEST });
+    try {
+        const { data } = await axios.get(`${baseURL}orders/my-orders/${userId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        dispatch({ type: ORDERS_SUCCESS, payload: data });
+        return data;
+    } catch (error) {
+        const message = error?.response?.data || error.message;
+        dispatch({ type: ORDERS_FAIL, payload: message });
+        throw error;
+    }
+};
+
+export const updateMyOrderStatus = (orderId, status, token) => async (dispatch) => {
+    dispatch({ type: ORDER_STATUS_UPDATE_REQUEST });
+    try {
+        const { data } = await axios.put(
+            `${baseURL}orders/${orderId}/my-status`,
+            { status },
+            {
+                headers: { Authorization: `Bearer ${token}` },
+            }
+        );
+        dispatch({ type: ORDER_STATUS_UPDATE_SUCCESS, payload: data });
+        return data;
+    } catch (error) {
+        const message = error?.response?.data || error.message;
+        dispatch({ type: ORDER_STATUS_UPDATE_FAIL, payload: message });
+        throw error;
+    }
+};

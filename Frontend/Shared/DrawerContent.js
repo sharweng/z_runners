@@ -18,18 +18,31 @@ const DrawerContent = () => {
       <Drawer.Section>
       <Drawer.Item
         label="My Profile"
-
-        onPress={() => navigation.navigate('User', { screen: 'User Profile' })}
+        onPress={() =>
+          navigation.navigate('Zone Runners', {
+            screen: 'User',
+            params: { screen: 'User Profile' },
+          })
+        }
         icon="account"
       />
       <Drawer.Item
         label="My Orders"
-        onPress={() => navigation.navigate('User', { screen: 'My Orders' })}
+        onPress={() =>
+          navigation.navigate('Zone Runners', {
+            screen: 'My Orders',
+          })
+        }
         icon="cart-variant"
       />
       <Drawer.Item
         label="Cart"
-        onPress={() => navigation.navigate('Cart Screen', { screen: 'Cart' })}
+        onPress={() =>
+          navigation.navigate('Zone Runners', {
+            screen: 'Cart Screen',
+            params: { screen: 'Cart' },
+          })
+        }
         icon="history"
       />
       <Drawer.Item

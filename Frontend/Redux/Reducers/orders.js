@@ -29,7 +29,23 @@ const orders = (state = initialState, action) => {
             return {
                 ...state,
                 updating: false,
-                items: state.items.map((order) => (order.id === action.payload.id ? action.payload : order)),
+                items: state.items.map((order) => {
+                    if (order.id !== action.payload.id) {
+                        return order;
+                    }
+
+                    const nextOrderItems = Array.isArray(action.payload?.orderItems)
+                        && action.payload.orderItems.length > 0
+                        && typeof action.payload.orderItems[0] === 'object'
+                        ? action.payload.orderItems
+                        : order.orderItems;
+
+                    return {
+                        ...order,
+                        ...action.payload,
+                        orderItems: nextOrderItems,
+                    };
+                }),
             };
         case ORDER_STATUS_UPDATE_FAIL:
             return { ...state, updating: false, error: action.payload };

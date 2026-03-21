@@ -63,6 +63,16 @@ const Cart = () => {
         </TouchableOpacity>;
 
     const handleCheckout = () => {
+        if (!cartItems.length) {
+            Toast.show({
+                topOffset: 60,
+                type: 'error',
+                text1: 'Your cart is empty',
+                text2: 'Add products before checkout',
+            });
+            return;
+        }
+
         if (!context?.stateUser?.isAuthenticated) {
             Toast.show({
                 topOffset: 60,

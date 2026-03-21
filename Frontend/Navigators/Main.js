@@ -7,6 +7,7 @@ import CartNavigator from "./CartNavigator";
 import CartIcon from "../Shared/CartIcon";
 import UserNavigator from "./UserNavigator";
 import AdminNavigator from "./AdminNavigator";
+import MyOrdersNavigator from "./MyOrdersNavigator";
 import AuthGlobal from "../Context/Store/AuthGlobal";
 import { colors } from "../Shared/theme";
 const Tab = createBottomTabNavigator();
@@ -69,6 +70,24 @@ const Main = () => {
                     }
                 }}
             />
+
+            {!isAdmin && (
+                <Tab.Screen
+                    name="My Orders"
+                    component={MyOrdersNavigator}
+                    options={{
+                        headerShown: false,
+                        tabBarIcon: ({ color }) => {
+                            return <Ionicons
+                                name="receipt"
+                                style={{ position: "relative" }}
+                                color={color}
+                                size={26}
+                            />
+                        }
+                    }}
+                />
+            )}
 
             {isAdmin && (
                 <Tab.Screen

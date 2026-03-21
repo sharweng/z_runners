@@ -11,11 +11,13 @@ import * as ImagePicker from "expo-image-picker";
 import mime from "mime";
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker';
 
 import AuthGlobal from "../../Context/Store/AuthGlobal"
 import { logoutUser } from "../../Context/Actions/Auth.actions"
 import Input from '../../Shared/Input';
 import { colors, radius, shadow, spacing } from "../../Shared/theme";
+const countries = require("../../data/countries.json");
 
 
 const UserProfile = (props) => {
@@ -26,7 +28,7 @@ const UserProfile = (props) => {
     const [phone, setPhone] = useState('')
     const [street, setStreet] = useState('')
     const [city, setCity] = useState('')
-    const [country, setCountry] = useState('')
+    const [country, setCountry] = useState(countries[0]?.code || '')
     const [password, setPassword] = useState('')
     const [image, setImage] = useState('')
     const [saving, setSaving] = useState(false)
@@ -49,7 +51,7 @@ const UserProfile = (props) => {
         setPhone(userProfile.phone || '');
         setStreet(userProfile.street || '');
         setCity(userProfile.city || '');
-        setCountry(userProfile.country || '');
+        setCountry(userProfile.country || countries[0]?.code || '');
         setImage(userProfile.image || '');
     }, [userProfile])
 
@@ -197,12 +199,16 @@ const UserProfile = (props) => {
                 <Input placeholder="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
                 <Input placeholder="Street" value={street} onChangeText={setStreet} />
                 <Input placeholder="City" value={city} onChangeText={setCity} />
-                <Input placeholder="Country" value={country} onChangeText={setCountry} />
+                <Picker
+                    style={styles.picker}
+                    selectedValue={country}
+                    onValueChange={(itemValue) => setCountry(itemValue)}
+                >
+                    {countries.map((c) => (
+                        <Picker.Item key={c.code} label={c.name} value={c.code} />
+                    ))}
+                </Picker>
                 <Input placeholder="New Password (optional)" value={password} onChangeText={setPassword} secureTextEntry />
-
-                <View style={styles.card}>
-                    <Text style={styles.info}>Profile details are editable above.</Text>
-                </View>
 
                 <View style={styles.buttonWrap}>
                     <Button
@@ -269,19 +275,13 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginBottom: spacing.md,
     },
-    card: {
+    picker: {
         width: '100%',
         backgroundColor: colors.surface,
-        borderRadius: radius.lg,
         borderWidth: 1,
         borderColor: colors.border,
-        padding: spacing.lg,
-        ...shadow,
-    },
-    info: {
-        marginVertical: spacing.sm,
-        color: colors.text,
-        fontSize: 15,
+        borderRadius: radius.md,
+        marginTop: spacing.sm,
     },
     buttonWrap: {
         marginTop: 20,

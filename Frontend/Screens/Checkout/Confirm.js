@@ -16,14 +16,21 @@ import { colors, radius, shadow, spacing } from '../../Shared/theme';
 import { clearSavedCartItems } from '../Cart/cartStorage';
 const Confirm = (props) => {
     const context = useContext(AuthGlobal)
-    // const confirm = props.route.params;
-    const finalOrder = props.route.params;
-    console.log("order", finalOrder)
+    const order = props?.route?.params?.order;
+    console.log("order", order)
     const dispatch = useDispatch()
     let navigation = useNavigation()
 
     const confirmOrder = () => {
-        const order = finalOrder.order.order;
+        if (!order) {
+            Toast.show({
+                topOffset: 60,
+                type: "error",
+                text1: "Missing order data",
+                text2: "Please restart checkout",
+            });
+            return;
+        }
 
         AsyncStorage.getItem("jwt")
             .then((res) => {
@@ -68,19 +75,19 @@ const Confirm = (props) => {
             <ScrollView contentContainerStyle={styles.container}>
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>Confirm Order</Text>
-                    {props.route.params ? (
+                    {order ? (
                         <View style={styles.card}>
                             <Text style={styles.title}>Shipping to:</Text>
                             <View style={styles.cardBody}>
-                                <Text>Address: {finalOrder.order.order.shippingAddress1}</Text>
-                                <Text>Address2: {finalOrder.order.order.shippingAddress2}</Text>
-                                <Text>City: {finalOrder.order.order.city}</Text>
-                                <Text>Zip Code: {finalOrder.order.order.zip}</Text>
-                                <Text>Country: {finalOrder.order.order.country}</Text>
+                                <Text>Address: {order.shippingAddress1}</Text>
+                                <Text>Address2: {order.shippingAddress2}</Text>
+                                <Text>City: {order.city}</Text>
+                                <Text>Zip Code: {order.zip}</Text>
+                                <Text>Country: {order.country}</Text>
                             </View>
                             <Text style={styles.title}>items</Text>
 
-                            {finalOrder.order.order.orderItems.map((item) => {
+                            {order.orderItems?.map((item) => {
                                 return (
                                     <Surface key={item.id} style={styles.itemCard}>
 
