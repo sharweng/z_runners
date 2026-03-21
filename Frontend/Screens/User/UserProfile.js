@@ -1,5 +1,5 @@
 import React, { useContext, useState, useCallback, useEffect } from 'react';
-import { View, Text, ScrollView, Button, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 // import { Container } from "native-base"
 import { useFocusEffect, useNavigation } from "@react-navigation/native"
 
@@ -19,6 +19,21 @@ import Input from '../../Shared/Input';
 import { colors, radius, shadow, spacing } from "../../Shared/theme";
 const countries = require("../../data/countries.json");
 
+const normalizeCountryValue = (value) => {
+    if (!value) {
+        return '';
+    }
+
+    const input = String(value).trim().toLowerCase();
+    const byCode = countries.find((item) => item.code.toLowerCase() === input);
+    if (byCode) {
+        return byCode.code;
+    }
+
+    const byName = countries.find((item) => item.name.toLowerCase() === input);
+    return byName ? byName.code : '';
+};
+
 
 const UserProfile = (props) => {
     const context = useContext(AuthGlobal)
@@ -28,7 +43,7 @@ const UserProfile = (props) => {
     const [phone, setPhone] = useState('')
     const [street, setStreet] = useState('')
     const [city, setCity] = useState('')
-    const [country, setCountry] = useState(countries[0]?.code || '')
+    const [country, setCountry] = useState('')
     const [password, setPassword] = useState('')
     const [image, setImage] = useState('')
     const [saving, setSaving] = useState(false)
@@ -51,7 +66,7 @@ const UserProfile = (props) => {
         setPhone(userProfile.phone || '');
         setStreet(userProfile.street || '');
         setCity(userProfile.city || '');
-        setCountry(userProfile.country || countries[0]?.code || '');
+        setCountry(normalizeCountryValue(userProfile.country));
         setImage(userProfile.image || '');
     }, [userProfile])
 
@@ -82,12 +97,12 @@ const UserProfile = (props) => {
     }
 
     const updateProfile = async () => {
-        if (!name || !email || !phone) {
+        if (!name || !email || !phone || !country) {
             Toast.show({
                 topOffset: 60,
                 type: 'error',
                 text1: 'Missing required fields',
-                text2: 'Name, email, and phone are required.',
+                text2: 'Name, email, phone, and country are required.',
             });
             return;
         }
@@ -152,6 +167,11 @@ const UserProfile = (props) => {
         }
     }
 
+    const handleSignOut = () => {
+        AsyncStorage.removeItem("jwt");
+        logoutUser(context.dispatch);
+    }
+
     useFocusEffect(
         useCallback(() => {
             if (
@@ -178,8 +198,11 @@ const UserProfile = (props) => {
 
     return (
         <View style={styles.container}>
-            <ScrollView contentContainerStyle={styles.subContainer}>
-                <View style={styles.imageContainer}>
+            <ScrollView contentContainerStyle={styles.contentContainer}>
+                <Text style={styles.screenTitle}>Edit Profile</Text>
+
+                <View style={styles.card}>
+                    <View style={styles.imageContainer}>
                     <Image
                         style={styles.image}
                         source={{ uri: image || 'https://via.placeholder.com/200x200.png?text=Profile' }}
@@ -189,43 +212,57 @@ const UserProfile = (props) => {
                     </TouchableOpacity>
                 </View>
 
-                <View style={styles.buttonRow}>
-                    <Button color={colors.primary} title="Take Photo" onPress={takePhoto} />
-                    <Button color={colors.accent} title="Upload Photo" onPress={pickImage} />
+                    <View style={styles.buttonRow}>
+                        <TouchableOpacity style={[styles.smallButton, styles.primaryFill]} onPress={takePhoto}>
+                            <Text style={styles.smallButtonText}>Take Photo</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.smallButton, styles.secondaryFill]} onPress={pickImage}>
+                            <Text style={styles.smallButtonText}>Upload Photo</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
-                <Input placeholder="Name" value={name} onChangeText={setName} />
-                <Input placeholder="Email" value={email} onChangeText={(text) => setEmail(text.toLowerCase())} />
-                <Input placeholder="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-                <Input placeholder="Street" value={street} onChangeText={setStreet} />
-                <Input placeholder="City" value={city} onChangeText={setCity} />
-                <Picker
-                    style={styles.picker}
-                    selectedValue={country}
-                    onValueChange={(itemValue) => setCountry(itemValue)}
+                <View style={styles.card}>
+                    <Text style={styles.sectionTitle}>Account Details</Text>
+                    <Input placeholder="Name" value={name} onChangeText={setName} />
+                    <Input placeholder="Email" value={email} onChangeText={(text) => setEmail(text.toLowerCase())} />
+                    <Input placeholder="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+                    <Input placeholder="Street" value={street} onChangeText={setStreet} />
+                    <Input placeholder="City" value={city} onChangeText={setCity} />
+
+                    <Text style={styles.fieldLabel}>Country</Text>
+                    <View style={styles.pickerWrap}>
+                        <Picker
+                            mode="dropdown"
+                            style={styles.picker}
+                            selectedValue={country}
+                            onValueChange={(itemValue) => setCountry(itemValue)}
+                        >
+                            <Picker.Item label="Select country" value="" />
+                            {countries.map((c) => (
+                                <Picker.Item key={c.code} label={c.name} value={c.code} />
+                            ))}
+                        </Picker>
+                    </View>
+
+                    <Input placeholder="New Password (optional)" value={password} onChangeText={setPassword} secureTextEntry />
+                </View>
+
+                <TouchableOpacity
+                    style={[styles.actionButton, styles.saveButton, saving && styles.disabledButton]}
+                    onPress={updateProfile}
+                    disabled={saving}
                 >
-                    {countries.map((c) => (
-                        <Picker.Item key={c.code} label={c.name} value={c.code} />
-                    ))}
-                </Picker>
-                <Input placeholder="New Password (optional)" value={password} onChangeText={setPassword} secureTextEntry />
+                    {saving
+                        ? <ActivityIndicator color={colors.surface} />
+                        : <Text style={styles.actionButtonText}>Save Profile</Text>}
+                </TouchableOpacity>
 
-                <View style={styles.buttonWrap}>
-                    <Button
-                        color={colors.primary}
-                        title={saving ? 'Saving...' : 'Save Profile'}
-                        onPress={updateProfile}
-                        disabled={saving}
-                    />
-                </View>
+                <TouchableOpacity style={[styles.actionButton, styles.signOutButton]} onPress={handleSignOut}>
+                    <Text style={[styles.actionButtonText, styles.signOutText]}>Sign Out</Text>
+                </TouchableOpacity>
 
-                <View style={styles.buttonWrap}>
-                    <Button color={colors.danger} title={"Sign Out"} onPress={() => [
-                        AsyncStorage.removeItem("jwt"),
-                        logoutUser(context.dispatch)
-                    ]} />
-                </View>
-
+                <View style={styles.bottomSpace} />
             </ScrollView>
         </View>
     )
@@ -234,26 +271,46 @@ const UserProfile = (props) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        alignItems: "center",
         backgroundColor: colors.background,
     },
-    subContainer: {
-        alignItems: "center",
+    contentContainer: {
         paddingTop: spacing.xl,
         paddingHorizontal: spacing.lg,
         width: '100%',
     },
+    screenTitle: {
+        fontSize: 28,
+        fontWeight: '700',
+        color: colors.text,
+        marginBottom: spacing.lg,
+    },
+    card: {
+        width: '100%',
+        backgroundColor: colors.surface,
+        borderRadius: radius.md,
+        padding: spacing.lg,
+        marginBottom: spacing.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        ...shadow,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: colors.text,
+        marginBottom: spacing.sm,
+    },
     imageContainer: {
-        width: 200,
-        height: 200,
+        alignSelf: 'center',
+        width: 180,
+        height: 180,
         borderStyle: 'solid',
         borderWidth: 1,
         justifyContent: 'center',
-        borderRadius: 100,
+        borderRadius: 90,
         borderColor: colors.border,
         backgroundColor: colors.surface,
         marginBottom: spacing.md,
-        ...shadow,
     },
     image: {
         width: '100%',
@@ -273,20 +330,74 @@ const styles = StyleSheet.create({
         width: '100%',
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: spacing.md,
+        gap: spacing.sm,
     },
-    picker: {
+    smallButton: {
+        flex: 1,
+        borderRadius: radius.pill,
+        paddingVertical: spacing.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    primaryFill: {
+        backgroundColor: colors.primary,
+    },
+    secondaryFill: {
+        backgroundColor: colors.accent,
+    },
+    smallButtonText: {
+        color: colors.surface,
+        fontWeight: '600',
+    },
+    fieldLabel: {
         width: '100%',
-        backgroundColor: colors.surface,
+        marginTop: spacing.sm,
+        marginBottom: spacing.xs,
+        color: colors.text,
+        fontWeight: '600',
+    },
+    pickerWrap: {
+        width: '100%',
         borderWidth: 1,
         borderColor: colors.border,
         borderRadius: radius.md,
-        marginTop: spacing.sm,
+        backgroundColor: colors.surface,
+        overflow: 'hidden',
     },
-    buttonWrap: {
-        marginTop: 20,
+    picker: {
+        width: '100%',
+        color: colors.text,
+    },
+    actionButton: {
+        width: '100%',
+        borderRadius: radius.pill,
+        paddingVertical: spacing.lg,
         alignItems: "center",
-    }
+        justifyContent: 'center',
+        marginBottom: spacing.md,
+    },
+    saveButton: {
+        backgroundColor: colors.primary,
+    },
+    signOutButton: {
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.danger,
+    },
+    actionButtonText: {
+        color: colors.surface,
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    signOutText: {
+        color: colors.danger,
+    },
+    disabledButton: {
+        opacity: 0.7,
+    },
+    bottomSpace: {
+        height: spacing.xl,
+    },
 })
 
 export default UserProfile

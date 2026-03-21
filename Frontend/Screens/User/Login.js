@@ -1,8 +1,9 @@
 
 import React, { useState, useContext, useEffect } from "react";
-import { View, Text, StyleSheet, Button } from 'react-native'
+import { View, Text, StyleSheet, Button, TextInput, TouchableOpacity } from 'react-native'
 import { useNavigation } from '@react-navigation/native';
 import FormContainer from "../../Shared/FormContainer";
+import { Ionicons } from "@expo/vector-icons";
 
 import AuthGlobal from '../../Context/Store/AuthGlobal'
 import { loginUser } from '../../Context/Actions/Auth.actions'
@@ -14,6 +15,7 @@ const Login = (props) => {
     const navigation = useNavigation()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
     const handleSubmit = () => {
         const user = {
             email,
@@ -43,14 +45,28 @@ const Login = (props) => {
                 value={email}
                 onChangeText={(text) => setEmail(text.toLowerCase())}
             />
-            <Input
-                placeholder={"Enter Password"}
-                name={"password"}
-                id={"password"}
-                secureTextEntry={true}
-                value={password}
-                onChangeText={(text) => setPassword(text)}
-            />
+            <View style={styles.passwordContainer}>
+                <TextInput
+                    style={styles.passwordInput}
+                    placeholder="Enter Password"
+                    placeholderTextColor={colors.muted}
+                    secureTextEntry={!showPassword}
+                    value={password}
+                    onChangeText={(text) => setPassword(text)}
+                />
+                <TouchableOpacity
+                    onPress={() => setShowPassword((prev) => !prev)}
+                    style={styles.passwordToggle}
+                    accessibilityRole="button"
+                    accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                >
+                    <Ionicons
+                        name={showPassword ? "eye-off" : "eye"}
+                        size={20}
+                        color={colors.muted}
+                    />
+                </TouchableOpacity>
+            </View>
             <View style={styles.buttonGroup}>
                 <Button color={colors.accent} title="Login"
                     onPress={() => handleSubmit()} />
@@ -63,6 +79,27 @@ const Login = (props) => {
     )
 }
 const styles = StyleSheet.create({
+    passwordContainer: {
+        width: '100%',
+        minHeight: 56,
+        backgroundColor: colors.surface,
+        marginVertical: spacing.sm,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: colors.border,
+        paddingHorizontal: spacing.lg,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    passwordInput: {
+        flex: 1,
+        color: colors.text,
+        paddingVertical: spacing.md,
+    },
+    passwordToggle: {
+        paddingLeft: spacing.sm,
+        paddingVertical: spacing.xs,
+    },
     buttonGroup: {
         width: "100%",
         alignItems: "center",

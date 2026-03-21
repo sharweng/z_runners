@@ -1,9 +1,9 @@
-import React, { useContext } from 'react'
+import React, { useCallback, useContext } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Text, View, TouchableHighlight, StyleSheet, Dimensions, TouchableOpacity } from 'react-native'
 
 
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Icon from "react-native-vector-icons/FontAwesome";
 import { SwipeListView } from 'react-native-swipe-list-view';
 import { removeFromCart, clearCart } from '../../Redux/Actions/cartActions'
@@ -19,6 +19,22 @@ const Cart = () => {
     const dispatch = useDispatch()
     const cartItems = useSelector(state => state.cartItems)
     const context = useContext(AuthGlobal);
+
+    useFocusEffect(
+        useCallback(() => {
+            if (context?.stateUser?.isAuthenticated) {
+                return;
+            }
+
+            Toast.show({
+                topOffset: 60,
+                type: 'error',
+                text1: 'Please login first',
+                text2: 'Sign in to access your cart.',
+            });
+            navigation.navigate('User', { screen: 'Login' });
+        }, [context?.stateUser?.isAuthenticated, navigation])
+    );
 
     var total = 0;
     console.log("cart", cartItems)

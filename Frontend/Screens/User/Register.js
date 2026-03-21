@@ -1,43 +1,34 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, Linking, Button } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useNavigation } from '@react-navigation/native';
 
-import FormContainer from "../../Shared/FormContainer";
 import Input from "../../Shared/Input";
 // import Error from "../Shared/Error"
 import axios from "axios";
 import baseURL from "../../constants/baseurl";
 import Toast from "react-native-toast-message";
-import { Camera, CameraType } from 'expo-camera';
 import { Ionicons } from "@expo/vector-icons";
 import mime from "mime";
-
+import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from "expo-image-picker"
-import * as Location from 'expo-location';
 import { colors, radius, shadow, spacing } from "../../Shared/theme";
-var { height, width } = Dimensions.get("window")
+const countries = require("../../data/countries.json");
 
 const Register = (props) => {
     const [email, setEmail] = useState("");
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
+    const [country, setCountry] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
-    const [launchCam, setLaunchCam] = useState(false)
-    const [type, setType] = useState(null);
-    const [hasCameraPermission, setHasCameraPermission] = useState(null);
-    const [camera, setCamera] = useState(null);
     const [image, setImage] = useState(null);
     const [mainImage, setMainImage] = useState('');
-    const [location, setLocation] = useState(false);
-    const [errorMsg, setErrorMsg] = useState(null);
+    const [saving, setSaving] = useState(false);
     const navigation = useNavigation()
 
 
 
     const takePhoto = async () => {
-        setLaunchCam(true)
         const c = await ImagePicker.requestCameraPermissionsAsync();
 
         if (c.status === "granted") {
@@ -57,19 +48,17 @@ const Register = (props) => {
 
     const register = () => {
         console.log(`${baseURL}users/register`)
-        if (email === "" || name === "" || phone === "" || password === "") {
-            setError("Please fill in the form correctly");
+        if (email === "" || name === "" || phone === "" || password === "" || country === "") {
             Toast.show({
                 topOffset: 60,
                 type: "error",
                 text1: "Missing required fields",
-                text2: "Please complete name, email, phone and password.",
+                text2: "Please complete name, email, phone, password, and country.",
             });
             return;
         }
 
         if (!image) {
-            setError("Please add a profile photo");
             Toast.show({
                 topOffset: 60,
                 type: "error",
@@ -87,6 +76,7 @@ const Register = (props) => {
         formData.append("email", email);
         formData.append("password", password);
         formData.append("phone", phone);
+        formData.append("country", country);
         formData.append("isAdmin", false);
         formData.append("image", {
             uri: newImageUri,
@@ -99,6 +89,7 @@ const Register = (props) => {
 
             }
         }
+        setSaving(true);
         axios
             .post(`${baseURL}users/register`, formData, config)
             .then((res) => {
@@ -125,13 +116,7 @@ const Register = (props) => {
                 });
                 console.log(error)
             })
-    }
-
-    const getLocation = () => {
-        // ?z=15&q='restaurants
-        const { coords } = location
-        const url = `geo:${coords.latitude},${coords.longtitude}?z=15`;
-        Linking.openURL(url);
+            .finally(() => setSaving(false))
     }
 
     const pickImage = async () => {
@@ -153,19 +138,8 @@ const Register = (props) => {
 
     useEffect(() => {
         (async () => {
-            const cameraStatus = await Camera.requestCameraPermissionsAsync();
-            setHasCameraPermission(cameraStatus.status === 'granted');
-        })();
-        (async () => {
-
-            let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                setErrorMsg('Permission to access location was denied');
-                return;
-            }
-
-            let location = await Location.getCurrentPositionAsync({});
-            setLocation(location);
+            await ImagePicker.requestCameraPermissionsAsync();
+            await ImagePicker.requestMediaLibraryPermissionsAsync();
         })();
     }, []);
     // console.log(location)
@@ -174,18 +148,36 @@ const Register = (props) => {
             viewIsInsideTabBar={true}
             extraHeight={200}
             enableOnAndroid={true}
+            contentContainerStyle={styles.contentContainer}
         >
-            <FormContainer title={"Create account"}>
+            <Text style={styles.screenTitle}>Create Account</Text>
+
+            <View style={styles.card}>
 
                 <View style={styles.imageContainer}>
-                    <Image style={styles.image} source={{ uri: mainImage }} />
+                    <Image
+                        style={styles.image}
+                        source={{ uri: mainImage || 'https://via.placeholder.com/200x200.png?text=Profile' }}
+                    />
                     <TouchableOpacity
                         onPress={takePhoto}
-                        // onPress={pickImage}
                         style={styles.imagePicker}>
                         <Ionicons style={{ color: "white" }} name="camera" />
                     </TouchableOpacity>
                 </View>
+
+                <View style={styles.buttonRow}>
+                    <TouchableOpacity style={[styles.smallButton, styles.primaryFill]} onPress={takePhoto}>
+                        <Text style={styles.smallButtonText}>Take Photo</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.smallButton, styles.secondaryFill]} onPress={pickImage}>
+                        <Text style={styles.smallButtonText}>Upload Photo</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+            <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Account Details</Text>
                 <Input
                     placeholder={"Email"}
                     name={"email"}
@@ -205,6 +197,18 @@ const Register = (props) => {
                     keyboardType={"numeric"}
                     onChangeText={(text) => setPhone(text)}
                 />
+                <Text style={styles.fieldLabel}>Country</Text>
+                <Picker
+                    mode="dropdown"
+                    style={styles.picker}
+                    selectedValue={country}
+                    onValueChange={(itemValue) => setCountry(itemValue)}
+                >
+                    <Picker.Item label="Select country" value="" />
+                    {countries.map((c) => (
+                        <Picker.Item key={c.code} label={c.name} value={c.code} />
+                    ))}
+                </Picker>
                 <Input
                     placeholder={"Password"}
                     name={"password"}
@@ -212,63 +216,72 @@ const Register = (props) => {
                     secureTextEntry={true}
                     onChangeText={(text) => setPassword(text)}
                 />
-                <View style={styles.buttonGroup}>
-                    {/* {error ? <Error message={error} /> : null} */}
-                </View>
-                <View>
-                    <Button
-                        title="Register"
-                        onPress={() => register()}
-                        color={colors.accent}
-                    />
-                </View>
-                {/* <View>
-                    <Button
-                        title="Back to Login"
-                        style={{ color: "blue" }}
-                        onPress={() => navigation.navigate("Login")}
-                    />
+            </View>
 
+            <TouchableOpacity
+                style={[styles.actionButton, styles.registerButton, saving && styles.disabledButton]}
+                onPress={register}
+                disabled={saving}
+            >
+                {saving
+                    ? <ActivityIndicator color={colors.surface} />
+                    : <Text style={styles.actionButtonText}>Register</Text>}
+            </TouchableOpacity>
 
-                    <Button title="Location"
-                        onPress={getLocation}
-                    />
+            <TouchableOpacity style={[styles.actionButton, styles.loginButton]} onPress={() => navigation.navigate("Login")}>
+                <Text style={[styles.actionButtonText, styles.loginButtonText]}>Back to Login</Text>
+            </TouchableOpacity>
 
-
-                </View> */}
-            </FormContainer>
+            <View style={styles.bottomSpace} />
         </KeyboardAwareScrollView>
     );
 };
 
 const styles = StyleSheet.create({
-    buttonGroup: {
+    contentContainer: {
         width: "100%",
-        margin: 10,
-        alignItems: "center",
+        paddingTop: spacing.xl,
+        paddingHorizontal: spacing.lg,
     },
-    buttonContainer: {
-        width: "80%",
-        marginBottom: 80,
-        marginTop: 20,
-        alignItems: "center"
+    screenTitle: {
+        fontSize: 28,
+        fontWeight: '700',
+        color: colors.text,
+        marginBottom: spacing.lg,
+    },
+    card: {
+        width: '100%',
+        backgroundColor: colors.surface,
+        borderRadius: radius.md,
+        padding: spacing.lg,
+        marginBottom: spacing.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        ...shadow,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: colors.text,
+        marginBottom: spacing.sm,
     },
     imageContainer: {
-        width: 200,
-        height: 200,
+        alignSelf: 'center',
+        width: 180,
+        height: 180,
         borderStyle: "solid",
         borderWidth: 1,
         padding: 0,
         justifyContent: "center",
-        borderRadius: 100,
+        borderRadius: 90,
         borderColor: colors.border,
         backgroundColor: colors.surface,
-        ...shadow,
+        marginBottom: spacing.md,
     },
     image: {
         width: "100%",
         height: "100%",
-        borderRadius: 100
+        borderRadius: 90
     },
     imagePicker: {
         position: "absolute",
@@ -279,14 +292,70 @@ const styles = StyleSheet.create({
         borderRadius: 100,
         elevation: 20
     },
-    cameraContainer: {
-        flex: 1,
-        flexDirection: 'row'
+    buttonRow: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: spacing.sm,
     },
-    fixedRatio: {
+    smallButton: {
         flex: 1,
-        aspectRatio: 1
-    }
+        borderRadius: radius.pill,
+        paddingVertical: spacing.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    primaryFill: {
+        backgroundColor: colors.primary,
+    },
+    secondaryFill: {
+        backgroundColor: colors.accent,
+    },
+    smallButtonText: {
+        color: colors.surface,
+        fontWeight: '600',
+    },
+    fieldLabel: {
+        width: "100%",
+        marginTop: spacing.sm,
+        marginBottom: spacing.xs,
+        color: colors.text,
+        fontWeight: '600',
+    },
+    picker: {
+        width: '100%',
+        color: colors.text,
+    },
+    actionButton: {
+        width: '100%',
+        borderRadius: radius.pill,
+        paddingVertical: spacing.lg,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: spacing.md,
+    },
+    registerButton: {
+        backgroundColor: colors.primary,
+    },
+    loginButton: {
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.accent,
+    },
+    actionButtonText: {
+        color: colors.surface,
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    loginButtonText: {
+        color: colors.accent,
+    },
+    disabledButton: {
+        opacity: 0.7,
+    },
+    bottomSpace: {
+        height: spacing.xl,
+    },
 });
 
 export default Register;

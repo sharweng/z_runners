@@ -1,4 +1,5 @@
 
+import React, { useContext } from 'react'
 import {
     StyleSheet,
     View,
@@ -13,10 +14,35 @@ import { addToCart } from '../../Redux/Actions/cartActions'
 import { useDispatch } from 'react-redux'
 import Toast from 'react-native-toast-message'
 import { colors, radius, shadow, spacing } from '../../Shared/theme';
+import AuthGlobal from '../../Context/Store/AuthGlobal';
+import { useNavigation } from '@react-navigation/native';
 
 const ProductCard = (props) => {
     const { name, price, image, countInStock } = props;
     const dispatch = useDispatch()
+    const context = useContext(AuthGlobal)
+    const navigation = useNavigation()
+
+    const handleAddToCart = () => {
+        if (!context?.stateUser?.isAuthenticated) {
+            Toast.show({
+                topOffset: 60,
+                type: 'error',
+                text1: 'Login required',
+                text2: 'Please login to add items to your cart.',
+            });
+            navigation.navigate('User', { screen: 'Login' });
+            return;
+        }
+
+        dispatch(addToCart({ ...props, quantity: 1 }));
+        Toast.show({
+            topOffset: 60,
+            type: 'success',
+            text1: `${name} added to Cart`,
+            text2: 'Go to your cart to complete order',
+        });
+    };
 
     return (
         <View style={styles.container}>
@@ -40,15 +66,7 @@ const ProductCard = (props) => {
             {countInStock > 0 ? (
                 <View style={styles.buttonWrap}>
                     <Button title={'Add'} color={'green'}
-                        onPress={() => {
-                            dispatch(addToCart({ ...props, quantity: 1, })),
-                                Toast.show({
-                                    topOffset: 60,
-                                    type: "success",
-                                    text1: `${name} added to Cart`,
-                                    text2: "Go to your cart to complete order"
-                                })
-                        }}
+                        onPress={handleAddToCart}
                     />
                 </View>
             ) : <Text style={{ marginTop: 20 }}>Currently Unavailable</Text>}

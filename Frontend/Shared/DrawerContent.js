@@ -1,13 +1,39 @@
 import { useNavigation } from '@react-navigation/native';
-import React from 'react';
+import React, { useContext } from 'react';
 import { Drawer } from 'react-native-paper';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, radius, spacing } from './theme';
+import AuthGlobal from '../Context/Store/AuthGlobal';
+import Toast from 'react-native-toast-message';
 
 
 
 const DrawerContent = () => {
   const navigation = useNavigation();
+  const context = useContext(AuthGlobal);
+  const isAdmin = !!context?.stateUser?.user?.isAdmin;
+  const isAuthenticated = !!context?.stateUser?.isAuthenticated;
+
+  const navigateToCart = () => {
+    if (!isAuthenticated) {
+      Toast.show({
+        topOffset: 60,
+        type: 'error',
+        text1: 'Please login first',
+        text2: 'Sign in to access your cart.',
+      });
+      navigation.navigate('Zone Runners', {
+        screen: 'User',
+        params: { screen: 'Login' },
+      });
+      return;
+    }
+
+    navigation.navigate('Zone Runners', {
+      screen: 'Cart Screen',
+      params: { screen: 'Cart' },
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -17,6 +43,41 @@ const DrawerContent = () => {
       </View>
       <Drawer.Section>
       <Drawer.Item
+        label="Home"
+        onPress={() =>
+          navigation.navigate('Zone Runners', {
+            screen: 'Home',
+          })
+        }
+        icon="home"
+      />
+      <Drawer.Item
+        label="Cart"
+        onPress={navigateToCart}
+        icon="cart"
+      />
+      {!isAdmin ? (
+        <Drawer.Item
+          label="My Orders"
+          onPress={() =>
+            navigation.navigate('Zone Runners', {
+              screen: 'My Orders',
+            })
+          }
+          icon="receipt"
+        />
+      ) : (
+        <Drawer.Item
+          label="Admin"
+          onPress={() =>
+            navigation.navigate('Zone Runners', {
+              screen: 'Admin',
+            })
+          }
+          icon="shield-account"
+        />
+      )}
+      <Drawer.Item
         label="My Profile"
         onPress={() =>
           navigation.navigate('Zone Runners', {
@@ -25,25 +86,6 @@ const DrawerContent = () => {
           })
         }
         icon="account"
-      />
-      <Drawer.Item
-        label="My Orders"
-        onPress={() =>
-          navigation.navigate('Zone Runners', {
-            screen: 'My Orders',
-          })
-        }
-        icon="cart-variant"
-      />
-      <Drawer.Item
-        label="Cart"
-        onPress={() =>
-          navigation.navigate('Zone Runners', {
-            screen: 'Cart Screen',
-            params: { screen: 'Cart' },
-          })
-        }
-        icon="history"
       />
       <Drawer.Item
         label="Notifications"

@@ -45,7 +45,7 @@ const MyOrders = () => {
                 Toast.show({
                     topOffset: 60,
                     type: 'error',
-                    text1: 'Please login to view your orders',
+                    text1: 'Please login before placing orders',
                 });
                 navigation.navigate('User', { screen: 'Login' });
                 return;
