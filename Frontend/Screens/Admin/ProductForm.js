@@ -211,7 +211,7 @@ const ProductForm = (props) => {
 
     const pickFromLibrary = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             allowsMultipleSelection: true,
             quality: 1
         });
@@ -223,7 +223,7 @@ const ProductForm = (props) => {
 
     const takePhoto = async () => {
         const result = await ImagePicker.launchCameraAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             quality: 1,
         });
 
@@ -363,7 +363,7 @@ const ProductForm = (props) => {
                         text2: ""
                     });
                     setTimeout(() => {
-                        navigation.navigate("Products");
+                        navigation.navigate("AdminTabs", { screen: "Products" });
                     }, 500)
                 })
                 .catch((error) => {
@@ -389,7 +389,7 @@ const ProductForm = (props) => {
                         text2: ""
                     });
                     setTimeout(() => {
-                        navigation.navigate("Products");
+                        navigation.navigate("AdminTabs", { screen: "Products" });
                     }, 500)
                 })
                 .catch((error) => {
@@ -417,11 +417,10 @@ const ProductForm = (props) => {
         }
 
     }
+    const isEditing = item !== null;
+
     return (
-        <FormContainer title="Add Product">
-            <View style={styles.imageContainer}>
-                {mainImage ? <Image style={styles.image} source={{ uri: mainImage }} /> : null}
-            </View>
+        <FormContainer title={isEditing ? "Update Product" : "Add Product"}>
             <View style={styles.imageActionsRow}>
                 <TouchableOpacity onPress={pickFromLibrary} style={styles.imageActionButton}>
                     <Ionicons style={styles.imageActionIcon} name="images-outline" />
@@ -517,7 +516,7 @@ const ProductForm = (props) => {
                 <Picker
                     label="Categories"
                     selectionColor="red"
-                    style={{ height: 100, width: 300 }}
+                    style={styles.categoryPicker}
                     minWidth="100%"
                     placeholder="Select your Category"
                     selectedValue={category || ''}
@@ -547,7 +546,7 @@ const ProductForm = (props) => {
                     large
                     primary
                     onPress={() => addProduct()}
-                ><Text style={styles.buttonText}>Confirm</Text>
+                ><Text style={styles.buttonText}>{isEditing ? 'Update' : 'Confirm'}</Text>
                 </EasyButton>
             </View>
         </FormContainer>
@@ -569,37 +568,22 @@ const styles = StyleSheet.create({
     buttonText: {
         color: "white"
     },
-    imageContainer: {
-        width: 200,
-        height: 200,
-        borderStyle: "solid",
-        borderWidth: 1,
-        padding: 0,
-        justifyContent: "center",
-        borderRadius: 100,
-        borderColor: colors.border,
-        backgroundColor: colors.surface,
-        ...shadow,
-    },
-    image: {
-        width: "100%",
-        height: "100%",
-        borderRadius: 100
-    },
     imageActionsRow: {
         width: '100%',
         flexDirection: 'row',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         gap: spacing.md,
-        marginTop: spacing.md,
+        marginBottom: spacing.sm,
     },
     imageActionButton: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: colors.primary,
-        borderRadius: radius.pill,
-        paddingHorizontal: spacing.md,
+        borderWidth: 2,
+        borderColor: colors.primary,
+        paddingHorizontal: spacing.sm,
         paddingVertical: spacing.sm,
     },
     imageActionIcon: {
@@ -609,6 +593,10 @@ const styles = StyleSheet.create({
     imageActionText: {
         color: 'white',
         fontWeight: '700',
+    },
+    categoryPicker: {
+        width: '100%',
+        height: 56,
     },
     galleryRow: {
         paddingVertical: spacing.sm,

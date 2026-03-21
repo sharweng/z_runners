@@ -56,9 +56,7 @@ const AdminNavigator = () => {
                 name="ProductForm"
                 component={ProductForm}
                 options={{
-                    title: 'Product Form',
-                    headerStyle: { backgroundColor: colors.surface },
-                    headerTintColor: colors.text,
+                    headerShown: false,
                 }}
             />
         </Stack.Navigator>
