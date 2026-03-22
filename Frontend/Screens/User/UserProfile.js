@@ -1,5 +1,5 @@
 import React, { useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 // import { Container } from "native-base"
 import { useFocusEffect, useNavigation } from "@react-navigation/native"
 
@@ -45,6 +45,7 @@ const UserProfile = (props) => {
     const [city, setCity] = useState('')
     const [country, setCountry] = useState('')
     const [password, setPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
     const [image, setImage] = useState('')
     const [saving, setSaving] = useState(false)
     const [shippingSaved, setShippingSaved] = useState(false)
@@ -278,7 +279,28 @@ const UserProfile = (props) => {
                         </Picker>
                     </View>
 
-                    <Input placeholder="New Password (optional)" value={password} onChangeText={setPassword} secureTextEntry />
+                    <View style={styles.passwordContainer}>
+                        <TextInput
+                            style={styles.passwordInput}
+                            placeholder="New Password (optional)"
+                            placeholderTextColor={colors.muted}
+                            secureTextEntry={!showPassword}
+                            value={password}
+                            onChangeText={setPassword}
+                        />
+                        <TouchableOpacity
+                            onPress={() => setShowPassword((prev) => !prev)}
+                            style={styles.passwordToggle}
+                            accessibilityRole="button"
+                            accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                            <Ionicons
+                                name={showPassword ? 'eye-off' : 'eye'}
+                                size={20}
+                                color={colors.muted}
+                            />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 <TouchableOpacity
@@ -395,6 +417,27 @@ const styles = StyleSheet.create({
     picker: {
         width: '100%',
         color: colors.text,
+    },
+    passwordContainer: {
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        marginTop: spacing.sm,
+    },
+    passwordInput: {
+        flex: 1,
+        minHeight: 56,
+        paddingHorizontal: spacing.md,
+        color: colors.text,
+    },
+    passwordToggle: {
+        width: 48,
+        minHeight: 56,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     actionButton: {
         width: '100%',

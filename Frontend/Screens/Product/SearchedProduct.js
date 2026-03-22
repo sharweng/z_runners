@@ -1,9 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions, FlatList, TouchableOpacity, Image, Text } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, Image, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing } from '../../Shared/theme';
-
-var { width } = Dimensions.get('window');
 
 const SearchedProduct = ({ productsFiltered = [] }) => {
     const navigation = useNavigation();
@@ -49,8 +47,9 @@ const SearchedProduct = ({ productsFiltered = [] }) => {
 
 const styles = StyleSheet.create({
     container: {
-        width,
+        width: '100%',
         paddingHorizontal: spacing.lg,
+        flex: 1,
     },
     listContent: {
         paddingBottom: spacing.lg,

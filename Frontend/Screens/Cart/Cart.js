@@ -72,7 +72,7 @@ const Cart = () => {
                     }}
                 />
 
-                <Text style={styles.itemName}>
+                <Text style={styles.itemName} numberOfLines={1} ellipsizeMode="tail">
                     {item.name}
                 </Text>
 
@@ -167,7 +167,7 @@ const Cart = () => {
             <View style={styles.bottomContainer}
             >
                 <View style={styles.totalWrap}>
-                    <Text style={styles.price}>$ {total.toFixed(2)}</Text>
+                    <Text style={styles.totalPrice}>$ {total.toFixed(2)}</Text>
                 </View>
                 <View style={styles.actionWrap}>
                     <TouchableOpacity
@@ -217,9 +217,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
     },
-    price: {
+    totalPrice: {
         fontSize: 18,
-        margin: 20,
         color: colors.primary,
         fontWeight: '800',
     },
@@ -292,6 +291,13 @@ const styles = StyleSheet.create({
         flex: 1,
         color: colors.text,
         fontWeight: '700',
+        marginRight: spacing.xs,
+    },
+    price: {
+        minWidth: 84,
+        textAlign: 'right',
+        color: colors.primary,
+        fontWeight: '800',
     },
     itemImage: {
         width: 52,
@@ -302,6 +308,7 @@ const styles = StyleSheet.create({
     },
     totalWrap: {
         minWidth: 90,
+        marginRight: spacing.sm,
     },
     actionWrap: {
         marginLeft: spacing.sm,

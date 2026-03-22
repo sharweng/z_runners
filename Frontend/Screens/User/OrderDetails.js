@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,7 +8,6 @@ import { colors, spacing } from '../../Shared/theme';
 import { fetchProductsByIds } from '../../Redux/Actions/productActions';
 import { fetchOrderById } from '../../Redux/Actions/orderActions';
 import { getJwtToken } from '../../utils/tokenStorage';
-import AuthGlobal from '../../Context/Store/AuthGlobal';
 
 const formatMoney = (value) => {
   const amount = Number(value) || 0;
@@ -86,9 +85,24 @@ const toTitleCase = (value) => {
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 };
 
+const buildOrderReference = (orderId) => {
+  const source = String(orderId || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  if (!source) {
+    return 'N/A';
+  }
+
+  return `ZR-${source.slice(-8)}`;
+};
+
+const renderKeyValueRow = (label, value, strong = false) => (
+  <View style={styles.kvRow}>
+    <Text style={[styles.kvLabel, strong && styles.kvStrong]}>{label}</Text>
+    <Text style={[styles.kvValue, strong && styles.kvStrong]} numberOfLines={2} ellipsizeMode="tail">{value}</Text>
+  </View>
+);
+
 const OrderDetails = ({ route }) => {
   const order = route?.params?.order;
-  const authContext = useContext(AuthGlobal);
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { byId: byIdProducts, byIdLoading, byIdError } = useSelector((state) => state.products);
@@ -98,6 +112,7 @@ const OrderDetails = ({ route }) => {
   const [resolvedOrder, setResolvedOrder] = useState(order);
 
   const displayOrder = resolvedOrder || order;
+  const orderReference = buildOrderReference(displayOrder?.id);
   const orderItems = useMemo(() => {
     if (!Array.isArray(displayOrder?.orderItems)) {
       return [];
@@ -229,20 +244,30 @@ const OrderDetails = ({ route }) => {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.card}>
+        <View style={styles.receiptMetaBlock}>
+          <View style={styles.receiptMetaRow}>
+            <Text style={styles.receiptMetaLabel}>Ref No.</Text>
+            <Text style={styles.receiptMetaValue}>{orderReference}</Text>
+          </View>
+          <View style={styles.receiptMetaRow}>
+            <Text style={styles.receiptMetaLabel}>Date</Text>
+            <Text style={styles.receiptMetaValue}>{formatDate(displayOrder.dateOrdered)}</Text>
+          </View>
+        </View>
+
         <Text style={styles.title}>Order #{displayOrder.id}</Text>
         <Text style={styles.meta}>Status: {toTitleCase(displayOrder.status)}</Text>
-        <Text style={styles.meta}>Placed: {formatDate(displayOrder.dateOrdered)}</Text>
-        <Text style={styles.meta}>Total: {formatMoney(displayOrder.totalPrice)}</Text>
+        <Text style={styles.meta}>Payment: {displayOrder.paymentMethod || 'N/A'}</Text>
       </View>
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Shipping Details</Text>
-        <Text style={styles.meta}>Address 1: {displayOrder.shippingAddress1 || 'N/A'}</Text>
-        <Text style={styles.meta}>Address 2: {displayOrder.shippingAddress2 || 'N/A'}</Text>
-        <Text style={styles.meta}>City: {displayOrder.city || 'N/A'}</Text>
-        <Text style={styles.meta}>Zip: {displayOrder.zip || 'N/A'}</Text>
-        <Text style={styles.meta}>Country: {displayOrder.country || 'N/A'}</Text>
-        <Text style={styles.meta}>Phone: {displayOrder.phone || 'N/A'}</Text>
+        {renderKeyValueRow('Address', displayOrder.shippingAddress1 || 'N/A')}
+        {renderKeyValueRow('Address 2', displayOrder.shippingAddress2 || 'N/A')}
+        {renderKeyValueRow('City', displayOrder.city || 'N/A')}
+        {renderKeyValueRow('Zip', displayOrder.zip || 'N/A')}
+        {renderKeyValueRow('Country', displayOrder.country || 'N/A')}
+        {renderKeyValueRow('Phone', displayOrder.phone || 'N/A')}
       </View>
 
       <View style={styles.card}>
@@ -284,6 +309,15 @@ const OrderDetails = ({ route }) => {
           );
         })}
       </View>
+
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Receipt Summary</Text>
+        {renderKeyValueRow('Subtotal', formatMoney(displayOrder.subtotal || 0))}
+        {renderKeyValueRow('Discount', `-${formatMoney(displayOrder.discountAmount || 0)}`)}
+        {renderKeyValueRow('Shipping', formatMoney(displayOrder.shippingFee || 0))}
+        {renderKeyValueRow('Total', formatMoney(displayOrder.totalPrice || 0), true)}
+        {renderKeyValueRow('Payment Method', displayOrder.paymentMethod || 'N/A')}
+      </View>
     </ScrollView>
   );
 };
@@ -309,6 +343,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.text,
     marginBottom: spacing.xs,
+    marginTop: spacing.md,
   },
   sectionTitle: {
     fontSize: 16,
@@ -320,8 +355,53 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginBottom: spacing.xs,
   },
+  receiptMetaBlock: {
+    borderWidth: 2,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceSoft,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  receiptMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  receiptMetaLabel: {
+    color: colors.muted,
+    fontWeight: '700',
+  },
+  receiptMetaValue: {
+    color: colors.text,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
+  kvRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  kvLabel: {
+    width: 116,
+    color: colors.muted,
+    fontWeight: '700',
+  },
+  kvValue: {
+    flex: 1,
+    color: colors.text,
+    fontWeight: '600',
+    textAlign: 'right',
+    fontVariant: ['tabular-nums'],
+  },
+  kvStrong: {
+    color: colors.primary,
+    fontWeight: '800',
+  },
   separator: {
-    height: 1,
+    height: 2,
     backgroundColor: colors.border,
     marginVertical: spacing.sm,
   },
@@ -354,6 +434,9 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '800',
     fontSize: 14,
+    minWidth: 88,
+    textAlign: 'right',
+    fontVariant: ['tabular-nums'],
   },
   errorText: {
     color: colors.danger,

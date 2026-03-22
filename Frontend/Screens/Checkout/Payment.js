@@ -81,11 +81,12 @@ const Payment = ({ route }) => {
             <Picker
               style={styles.picker}
               selectedValue={card}
+              dropdownIconColor={colors.text}
               onValueChange={(itemValue) => setCard(itemValue)}
             >
-              <Picker.Item label="Select Card Type" value="" />
+              <Picker.Item label="Select Card Type" value="" color={colors.muted} />
               {paymentCards.map((item) => (
-                <Picker.Item key={item.value} label={item.name} value={item.name} />
+                <Picker.Item key={item.value} label={item.name} value={item.name} color={colors.text} />
               ))}
             </Picker>
           </Surface>
@@ -127,6 +128,7 @@ const styles = StyleSheet.create({
   picker: {
     height: 56,
     width: '100%',
+    color: colors.text,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },

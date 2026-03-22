@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, TextInput } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useNavigation } from '@react-navigation/native';
 
@@ -20,6 +20,7 @@ const Register = (props) => {
     const [phone, setPhone] = useState("");
     const [country, setCountry] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [image, setImage] = useState(null);
     const [mainImage, setMainImage] = useState('');
     const [saving, setSaving] = useState(false);
@@ -186,13 +187,28 @@ const Register = (props) => {
                         <Picker.Item key={c.code} label={c.name} value={c.code} />
                     ))}
                 </Picker>
-                <Input
-                    placeholder={"Password"}
-                    name={"password"}
-                    id={"password"}
-                    secureTextEntry={true}
-                    onChangeText={(text) => setPassword(text)}
-                />
+                <View style={styles.passwordContainer}>
+                    <TextInput
+                        style={styles.passwordInput}
+                        placeholder="Password"
+                        placeholderTextColor={colors.muted}
+                        secureTextEntry={!showPassword}
+                        value={password}
+                        onChangeText={(text) => setPassword(text)}
+                    />
+                    <TouchableOpacity
+                        onPress={() => setShowPassword((prev) => !prev)}
+                        style={styles.passwordToggle}
+                        accessibilityRole="button"
+                        accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                        <Ionicons
+                            name={showPassword ? "eye-off" : "eye"}
+                            size={20}
+                            color={colors.muted}
+                        />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <TouchableOpacity
@@ -302,6 +318,27 @@ const styles = StyleSheet.create({
     picker: {
         width: '100%',
         color: colors.text,
+    },
+    passwordContainer: {
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        marginTop: spacing.sm,
+    },
+    passwordInput: {
+        flex: 1,
+        minHeight: 56,
+        paddingHorizontal: spacing.md,
+        color: colors.text,
+    },
+    passwordToggle: {
+        width: 48,
+        minHeight: 56,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     actionButton: {
         width: '100%',

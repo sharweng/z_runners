@@ -236,7 +236,6 @@ const ProductContainer = ({ route }) => {
 
             {focus ? (
                 <View style={styles.focusContainer}>
-                    <Banner />
                     <CategoryFilter
                         categories={categories}
                         categoryFilter={changeCtg}

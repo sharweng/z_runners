@@ -1,18 +1,28 @@
 import React, { useContext, useEffect, useMemo, useRef } from 'react'
-import { View, StyleSheet, Dimensions, ScrollView, Text, ActivityIndicator, TouchableOpacity } from "react-native";
+import { View, StyleSheet, Text, ActivityIndicator, TouchableOpacity, Image } from "react-native";
 import { Surface } from 'react-native-paper';
-
-
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux'
 import AuthGlobal from '../../Context/Store/AuthGlobal';
-var { width, height } = Dimensions.get("window");
 import Toast from 'react-native-toast-message';
 import { clearCart } from '../../Redux/Actions/cartActions';
 import { createOrder } from '../../Redux/Actions/orderActions';
 import { colors, spacing } from '../../Shared/theme';
 import { clearSavedCartItems } from '../Cart/cartStorage';
 import { getJwtToken } from '../../utils/tokenStorage';
+import FormContainer from '../../Shared/FormContainer';
+
+const getItemId = (item, index) => String(item?.id || item?._id || item?.product || `item-${index}`);
+const getItemImage = (item) => item?.image || item?.product?.image || 'https://cdn.pixabay.com/photo/2012/04/01/17/29/box-23649_960_720.png';
+const formatDateTime = (value) => {
+    const parsed = new Date(value || Date.now());
+    if (Number.isNaN(parsed.getTime())) {
+        return 'N/A';
+    }
+
+    return parsed.toLocaleString();
+};
+
 const Confirm = (props) => {
     const context = useContext(AuthGlobal)
     const order = props?.route?.params?.order;
@@ -37,13 +47,31 @@ const Confirm = (props) => {
     }, [order, cartItems]);
 
     const hasOrderItems = Array.isArray(liveOrder?.orderItems) && liveOrder.orderItems.length > 0;
+    const draftRef = `DRAFT-${String(liveOrder?.user || 'GUEST').slice(-6).toUpperCase()}`;
 
     const renderKeyValueRow = (label, value, isStrong = false) => (
         <View style={styles.kvRow}>
             <Text style={[styles.kvLabel, isStrong && styles.kvStrong]}>{label}</Text>
-            <Text style={[styles.kvValue, isStrong && styles.kvStrong]} numberOfLines={2}>{value}</Text>
+            <Text style={[styles.kvValue, isStrong && styles.kvStrong]} numberOfLines={2} ellipsizeMode="tail">{value}</Text>
         </View>
     );
+
+    const navigateToHome = () => {
+        const homeParams = {
+            screen: 'Main',
+            params: {
+                openSearch: false,
+                headerSearchText: '',
+            },
+        };
+
+        const parentNav = navigation.getParent();
+        const rootNav = parentNav?.getParent();
+
+        parentNav?.navigate?.('Home', homeParams);
+        rootNav?.navigate?.('Zone Runners', { screen: 'Home', params: homeParams });
+        navigation.navigate('Zone Runners', { screen: 'Home', params: homeParams });
+    };
 
     useEffect(() => {
         if (!order || hasOrderItems || didShowEmptyToastRef.current) {
@@ -102,7 +130,7 @@ const Confirm = (props) => {
             });
             setTimeout(() => {
                 dispatch(clearCart())
-                navigation.navigate('Cart Screen', { screen: 'Cart' })
+                navigateToHome();
             }, 500);
         } catch (error) {
             if (error?.code === 'ECONNABORTED') {
@@ -127,58 +155,65 @@ const Confirm = (props) => {
 
 
     return (
-        <Surface style={styles.surface}>
-            <ScrollView contentContainerStyle={styles.container}>
-                <View style={styles.titleContainer}>
-                    <Text style={styles.title}>Confirm Order</Text>
-                    {liveOrder && hasOrderItems ? (
-                        <View style={styles.card}>
-                            <Text style={styles.title}>Shipping to:</Text>
-                            <View style={styles.cardBody}>
-                                {renderKeyValueRow('Address', liveOrder.shippingAddress1 || '-')}
-                                {renderKeyValueRow('Address 2', liveOrder.shippingAddress2 || '-')}
-                                {renderKeyValueRow('City', liveOrder.city || '-')}
-                                {renderKeyValueRow('Zip Code', liveOrder.zip || '-')}
-                                {renderKeyValueRow('Country', liveOrder.country || '-')}
-                            </View>
-                            <Text style={styles.title}>Items</Text>
-
-                            <View style={styles.itemHeaderRow}>
-                                <Text style={[styles.itemHeaderText, styles.itemNameCol]}>Item</Text>
-                                <Text style={[styles.itemHeaderText, styles.itemQtyCol]}>Qty</Text>
-                                <Text style={[styles.itemHeaderText, styles.itemPriceCol]}>Price</Text>
-                            </View>
-
-                            {liveOrder.orderItems?.map((item) => {
-                                return (
-                                    <Surface key={item.id} style={styles.itemCard}>
-                                        <Text style={[styles.itemName, styles.itemNameCol]} numberOfLines={1}>
-                                            {item.name}
-                                        </Text>
-                                        <Text style={[styles.itemMeta, styles.itemQtyCol]}>
-                                            {Number(item?.quantity) || 1}
-                                        </Text>
-                                        <Text style={[styles.itemPrice, styles.itemPriceCol]}>
-                                            $ {(Number(item?.price) || 0).toFixed(2)}
-                                        </Text>
-                                    </Surface>
-                                )
-                            })}
-                            <View style={styles.summaryWrap}>
-                                {renderKeyValueRow('Subtotal', `$ ${Number(quote?.subtotal || 0).toFixed(2)}`)}
-                                {renderKeyValueRow('Discount', `-$ ${Number(quote?.discountAmount || 0).toFixed(2)}`)}
-                                {renderKeyValueRow('Tax', `$ ${Number(quote?.taxAmount || 0).toFixed(2)}`)}
-                                {renderKeyValueRow('Shipping', `$ ${Number(quote?.shippingFee || 0).toFixed(2)}`)}
-                                {renderKeyValueRow('Total', `$ ${Number(quote?.totalPrice || 0).toFixed(2)}`, true)}
-                                {renderKeyValueRow('Payment', paymentMethod || 'Card')}
-                            </View>
+        <FormContainer title={'Confirm Order'}>
+            {liveOrder && hasOrderItems ? (
+                <View style={styles.detailsWrap}>
+                    <View style={styles.receiptMetaBlock}>
+                        <View style={styles.receiptMetaRow}>
+                            <Text style={styles.receiptMetaLabel}>Ref No.</Text>
+                            <Text style={styles.receiptMetaValue}>{draftRef}</Text>
                         </View>
-                    ) : null}
+                        <View style={styles.receiptMetaRow}>
+                            <Text style={styles.receiptMetaLabel}>Date</Text>
+                            <Text style={styles.receiptMetaValue}>{formatDateTime(liveOrder?.dateOrdered)}</Text>
+                        </View>
+                    </View>
+
+                    <Text style={styles.sectionTitle}>Shipping to:</Text>
+                    <View style={styles.cardBody}>
+                        {renderKeyValueRow('Address', liveOrder.shippingAddress1 || '-')}
+                        {renderKeyValueRow('Address 2', liveOrder.shippingAddress2 || '-')}
+                        {renderKeyValueRow('City', liveOrder.city || '-')}
+                        {renderKeyValueRow('Zip Code', liveOrder.zip || '-')}
+                        {renderKeyValueRow('Country', liveOrder.country || '-')}
+                    </View>
+
+                    <Text style={styles.sectionTitle}>Items</Text>
+                    <View style={styles.itemHeaderRow}>
+                        <Text style={[styles.itemHeaderText, styles.itemNameCol]}>Item</Text>
+                        <Text style={[styles.itemHeaderText, styles.itemQtyCol]}>Qty</Text>
+                        <Text style={[styles.itemHeaderText, styles.itemPriceCol]}>Price</Text>
+                    </View>
+
+                    {liveOrder.orderItems?.map((item, index) => (
+                        <Surface key={getItemId(item, index)} style={styles.itemCard}>
+                            <Image source={{ uri: getItemImage(item) }} style={styles.itemImage} resizeMode="cover" />
+                            <Text style={[styles.itemName, styles.itemNameCol]} numberOfLines={1} ellipsizeMode="tail">
+                                {item?.name || 'Product'}
+                            </Text>
+                            <Text style={[styles.itemMeta, styles.itemQtyCol]}>
+                                {Number(item?.quantity) || 1}
+                            </Text>
+                            <Text style={[styles.itemPrice, styles.itemPriceCol]}>
+                                $ {(Number(item?.price) || 0).toFixed(2)}
+                            </Text>
+                        </Surface>
+                    ))}
+
+                    <View style={styles.summaryWrap}>
+                        {renderKeyValueRow('Subtotal', `$ ${Number(quote?.subtotal || 0).toFixed(2)}`)}
+                        {renderKeyValueRow('Discount', `-$ ${Number(quote?.discountAmount || 0).toFixed(2)}`)}
+                        {renderKeyValueRow('Shipping', `$ ${Number(quote?.shippingFee || 0).toFixed(2)}`)}
+                        {renderKeyValueRow('Total', `$ ${Number(quote?.totalPrice || 0).toFixed(2)}`, true)}
+                        {renderKeyValueRow('Payment', paymentMethod || 'Card')}
+                    </View>
+
                     {orderCreateError ? (
                         <Text style={styles.errorText}>
                             Failed to place order. Please retry.
                         </Text>
                     ) : null}
+
                     <View style={styles.actionWrap}>
                         <TouchableOpacity
                             style={[styles.actionButton, creating && styles.actionButtonDisabled]}
@@ -199,49 +234,55 @@ const Confirm = (props) => {
                         ) : null}
                     </View>
                 </View>
-            </ScrollView>
-        </Surface>
+            ) : null}
+        </FormContainer>
     )
 
 }
 const styles = StyleSheet.create({
-    surface: {
-        flex: 1,
-        backgroundColor: colors.background,
+    detailsWrap: {
+        width: '100%',
     },
-    container: {
-        minHeight: height,
-        padding: spacing.lg,
-        alignContent: "center",
-        backgroundColor: colors.background,
-    },
-    titleContainer: {
-        justifyContent: "center",
-        alignItems: "center",
-        margin: 8,
-    },
-    title: {
-        alignSelf: "center",
-        margin: 8,
+    sectionTitle: {
+        alignSelf: 'center',
+        marginBottom: spacing.sm,
+        marginTop: spacing.md,
         fontSize: 18,
         fontWeight: "800",
         color: colors.primary,
     },
-    card: {
-        width: width / 1.05,
+    receiptMetaBlock: {
         borderWidth: 2,
         borderColor: colors.border,
-        backgroundColor: colors.surface,
-        padding: spacing.md,
+        backgroundColor: colors.surfaceSoft,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+    },
+    receiptMetaRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 4,
+    },
+    receiptMetaLabel: {
+        color: colors.muted,
+        fontWeight: '700',
+    },
+    receiptMetaValue: {
+        color: colors.text,
+        fontWeight: '800',
+        fontVariant: ['tabular-nums'],
     },
     cardBody: {
-        marginVertical: spacing.sm,
+        marginTop: spacing.sm,
         width: '100%',
     },
     kvRow: {
         flexDirection: 'row',
         width: '100%',
-        marginBottom: 6,
+        paddingVertical: 6,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
         alignItems: 'flex-start',
     },
     kvLabel: {
@@ -253,6 +294,8 @@ const styles = StyleSheet.create({
         flex: 1,
         color: colors.text,
         fontWeight: '600',
+        textAlign: 'right',
+        fontVariant: ['tabular-nums'],
     },
     kvStrong: {
         color: colors.primary,
@@ -260,23 +303,32 @@ const styles = StyleSheet.create({
     },
     itemHeaderRow: {
         marginTop: spacing.sm,
-        borderBottomWidth: 1,
+        borderBottomWidth: 2,
         borderBottomColor: colors.border,
-        paddingBottom: 6,
+        paddingBottom: spacing.xs,
         flexDirection: 'row',
     },
     itemHeaderText: {
         color: colors.muted,
         fontWeight: '800',
+        textAlign: 'center',
     },
     itemCard: {
         marginTop: spacing.md,
         padding: spacing.md,
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.border,
         backgroundColor: colors.surfaceSoft,
         flexDirection: 'row',
         alignItems: 'center',
+    },
+    itemImage: {
+        width: 44,
+        height: 44,
+        borderWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        marginRight: spacing.sm,
     },
     itemNameCol: {
         flex: 1,
@@ -288,7 +340,7 @@ const styles = StyleSheet.create({
     },
     itemPriceCol: {
         width: 96,
-        textAlign: 'right',
+        textAlign: 'center',
     },
     itemName: {
         fontWeight: '700',
@@ -304,9 +356,9 @@ const styles = StyleSheet.create({
     },
     summaryWrap: {
         marginTop: spacing.md,
-        borderTopWidth: 1,
+        borderTopWidth: 2,
         borderTopColor: colors.border,
-        paddingTop: spacing.sm,
+        paddingTop: spacing.xs,
     },
     errorText: {
         color: colors.danger,
@@ -319,6 +371,9 @@ const styles = StyleSheet.create({
     actionWrap: {
         width: '100%',
         marginTop: spacing.md,
+        paddingTop: spacing.md,
+        borderTopWidth: 2,
+        borderTopColor: colors.border,
         gap: spacing.sm,
     },
     actionButton: {

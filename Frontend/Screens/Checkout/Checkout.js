@@ -270,6 +270,7 @@ const Checkout = (props) => {
                     minWidth="100%"
                     placeholder="Select your Country"
                     selectedValue={country}
+                    dropdownIconColor={colors.text}
                     onValueChange={(itemValue, itemIndex) =>
                         setCountry(itemValue)
                     }>
@@ -279,7 +280,9 @@ const Checkout = (props) => {
                             <Picker.Item
                                 key={c.code}
                                 label={c.name}
-                                value={c.code} />
+                                value={c.name}
+                                color={colors.text}
+                            />
                         )
                     })}
 
@@ -342,6 +345,7 @@ const styles = StyleSheet.create({
     picker: {
         width: '100%',
         backgroundColor: colors.surface,
+        color: colors.text,
         marginTop: spacing.sm,
         borderWidth: 2,
         borderColor: colors.border,
