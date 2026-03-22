@@ -3,13 +3,12 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Image } from 'rea
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import Toast from 'react-native-toast-message';
-import axios from 'axios';
 
 import { colors, spacing } from '../../Shared/theme';
 import { fetchProductsByIds } from '../../Redux/Actions/productActions';
+import { fetchOrderById } from '../../Redux/Actions/orderActions';
 import { getJwtToken } from '../../utils/tokenStorage';
 import AuthGlobal from '../../Context/Store/AuthGlobal';
-import baseURL from '../../constants/baseurl';
 
 const formatMoney = (value) => {
   const amount = Number(value) || 0;
@@ -93,6 +92,7 @@ const OrderDetails = ({ route }) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { byId: byIdProducts, byIdLoading, byIdError } = useSelector((state) => state.products);
+  const { selected: selectedOrder, selectedLoading, selectedError } = useSelector((state) => state.orders);
 
   const [resolvedProducts, setResolvedProducts] = useState({});
   const [resolvedOrder, setResolvedOrder] = useState(order);
@@ -111,6 +111,12 @@ const OrderDetails = ({ route }) => {
   }, [order]);
 
   useEffect(() => {
+    if (selectedOrder?.id === order?.id) {
+      setResolvedOrder(selectedOrder);
+    }
+  }, [selectedOrder, order?.id]);
+
+  useEffect(() => {
     let isMounted = true;
 
     const loadFreshOrder = async () => {
@@ -124,16 +130,14 @@ const OrderDetails = ({ route }) => {
           return;
         }
 
-        const response = await axios.get(`${baseURL}orders/my-order/${order.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const data = await dispatch(fetchOrderById(order.id, token));
 
         if (!isMounted) {
           return;
         }
 
-        if (response?.data) {
-          setResolvedOrder(response.data);
+        if (data) {
+          setResolvedOrder(data);
         }
       } catch (error) {
         // Keep fallback order payload from route.
@@ -243,6 +247,8 @@ const OrderDetails = ({ route }) => {
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Items</Text>
+        {selectedLoading ? <Text style={styles.meta}>Loading latest order details...</Text> : null}
+        {selectedError ? <Text style={styles.errorText}>Unable to refresh the latest order snapshot.</Text> : null}
         {byIdLoading ? <Text style={styles.meta}>Loading product details...</Text> : null}
         {byIdError ? <Text style={styles.errorText}>Some product details could not be loaded.</Text> : null}
         {orderItems.length === 0 ? <Text style={styles.meta}>No line items available.</Text> : null}

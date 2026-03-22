@@ -7,6 +7,10 @@ import axios from 'axios';
 import baseURL from '../constants/baseurl';
 import { getJwtToken } from './tokenStorage';
 
+const isPushNotifEnabled = ['1', 'true', 'yes', 'on'].includes(
+  String(process.env.EXPO_PUBLIC_PUSH_NOTIF ?? process.env.push_notif ?? 'false').trim().toLowerCase()
+) && Constants?.appOwnership !== 'expo';
+
 const getProjectId = () => {
   return (
     Constants?.expoConfig?.extra?.eas?.projectId
@@ -16,6 +20,10 @@ const getProjectId = () => {
 };
 
 export const configureNotificationChannel = async () => {
+  if (!isPushNotifEnabled) {
+    return;
+  }
+
   if (Platform.OS !== 'android') {
     return;
   }
@@ -29,6 +37,10 @@ export const configureNotificationChannel = async () => {
 };
 
 export const registerPushTokenForUser = async (userId) => {
+  if (!isPushNotifEnabled) {
+    return null;
+  }
+
   if (!userId || !Device.isDevice) {
     return null;
   }

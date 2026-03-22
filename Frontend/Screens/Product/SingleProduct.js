@@ -47,6 +47,7 @@ const SingleProduct = ({ route }) => {
     const context = useContext(AuthGlobal);
     const dispatch = useDispatch();
     const { selected } = useSelector((state) => state.products);
+    const { loading: reviewLoading, error: reviewError } = useSelector((state) => state.reviews);
 
     const currentUserId = context?.stateUser?.user?.userId;
     const reviews = Array.isArray(item?.reviews) ? item.reviews : [];
@@ -166,6 +167,10 @@ const SingleProduct = ({ route }) => {
     };
 
     const submitReview = () => {
+        if (reviewLoading) {
+            return;
+        }
+
         if (!canReview) {
             Toast.show({
                 topOffset: 60,
@@ -222,7 +227,7 @@ const SingleProduct = ({ route }) => {
                 loadProduct();
             })
             .catch((error) => {
-                const message = error?.response?.data || error?.message || 'Something went wrong';
+                const message = error?.response?.data || error?.message || reviewError || 'Something went wrong';
                 Toast.show({
                     topOffset: 60,
                     type: 'error',
@@ -239,6 +244,10 @@ const SingleProduct = ({ route }) => {
     };
 
     const deleteReview = (reviewId) => {
+        if (reviewLoading) {
+            return;
+        }
+
         if (!reviewId) {
             return;
         }
@@ -264,7 +273,7 @@ const SingleProduct = ({ route }) => {
                 loadProduct();
             })
             .catch((error) => {
-                const message = error?.response?.data || error?.message || 'Something went wrong';
+                const message = error?.response?.data || error?.message || reviewError || 'Something went wrong';
                 Toast.show({
                     topOffset: 60,
                     type: 'error',
@@ -374,7 +383,11 @@ const SingleProduct = ({ route }) => {
                                     <TouchableOpacity style={[styles.inlineHalfButton, styles.editButton]} onPress={() => editReview(review)}>
                                         <Text style={styles.inlineButtonText}>Edit Review</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.inlineHalfButton, styles.deleteButton]} onPress={() => deleteReview(review._id)}>
+                                    <TouchableOpacity
+                                        style={[styles.inlineHalfButton, styles.deleteButton, reviewLoading ? styles.buttonDisabled : null]}
+                                        onPress={() => deleteReview(review._id)}
+                                        disabled={reviewLoading}
+                                    >
                                         <Text style={styles.inlineButtonText}>Delete Review</Text>
                                     </TouchableOpacity>
                                 </View>
@@ -406,8 +419,12 @@ const SingleProduct = ({ route }) => {
                                 multiline
                                 style={[styles.input, styles.textArea]}
                             />
-                            <TouchableOpacity style={styles.primaryButton} onPress={submitReview}>
-                                <Text style={styles.primaryButtonText}>Update Review</Text>
+                            <TouchableOpacity
+                                style={[styles.primaryButton, reviewLoading ? styles.buttonDisabled : null]}
+                                onPress={submitReview}
+                                disabled={reviewLoading}
+                            >
+                                <Text style={styles.primaryButtonText}>{reviewLoading ? 'Saving...' : 'Update Review'}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.secondaryButton} onPress={() => {
                                 setEditingReviewId(null);
@@ -441,8 +458,12 @@ const SingleProduct = ({ route }) => {
                                 multiline
                                 style={[styles.input, styles.textArea]}
                             />
-                            <TouchableOpacity style={styles.primaryButton} onPress={submitReview}>
-                                <Text style={styles.primaryButtonText}>Submit Review</Text>
+                            <TouchableOpacity
+                                style={[styles.primaryButton, reviewLoading ? styles.buttonDisabled : null]}
+                                onPress={submitReview}
+                                disabled={reviewLoading}
+                            >
+                                <Text style={styles.primaryButtonText}>{reviewLoading ? 'Saving...' : 'Submit Review'}</Text>
                             </TouchableOpacity>
                         </>
                     ) : (
@@ -608,6 +629,9 @@ const styles = StyleSheet.create({
     inlineButtonText: {
         color: 'white',
         fontWeight: '700',
+    },
+    buttonDisabled: {
+        opacity: 0.65,
     },
     secondaryButton: {
         marginTop: spacing.sm,

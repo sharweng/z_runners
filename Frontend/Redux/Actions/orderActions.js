@@ -4,6 +4,9 @@ import {
     ORDERS_REQUEST,
     ORDERS_SUCCESS,
     ORDERS_FAIL,
+    ORDER_DETAILS_REQUEST,
+    ORDER_DETAILS_SUCCESS,
+    ORDER_DETAILS_FAIL,
     ORDER_CREATE_REQUEST,
     ORDER_CREATE_SUCCESS,
     ORDER_CREATE_FAIL,
@@ -56,6 +59,21 @@ export const fetchOrders = (token) => async (dispatch) => {
     } catch (error) {
         const message = error?.response?.data || error.message;
         dispatch({ type: ORDERS_FAIL, payload: message });
+        throw error;
+    }
+};
+
+export const fetchOrderById = (orderId, token) => async (dispatch) => {
+    dispatch({ type: ORDER_DETAILS_REQUEST });
+    try {
+        const { data } = await axios.get(`${baseURL}orders/my-order/${orderId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        dispatch({ type: ORDER_DETAILS_SUCCESS, payload: data });
+        return data;
+    } catch (error) {
+        const message = error?.response?.data || error.message;
+        dispatch({ type: ORDER_DETAILS_FAIL, payload: message });
         throw error;
     }
 };

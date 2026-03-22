@@ -5,6 +5,7 @@ if (!global.setImmediate) {
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native'
 import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import store from './Redux/store';
@@ -22,13 +23,19 @@ import {
 import { navigationRef, navigateToOrderDetails, flushPendingOrderNavigation } from './utils/navigation';
 import { getOrderIdFromNotificationResponse, registerPushTokenForUser } from './utils/pushNotifications';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+const isPushNotifEnabled = ['1', 'true', 'yes', 'on'].includes(
+  String(process.env.EXPO_PUBLIC_PUSH_NOTIF ?? process.env.push_notif ?? 'false').trim().toLowerCase()
+) && Constants?.appOwnership !== 'expo';
+
+if (isPushNotifEnabled) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 const CartPersistence = () => {
   const dispatch = useDispatch();
@@ -86,6 +93,10 @@ const NotificationBootstrap = () => {
   const [pendingOrderId, setPendingOrderId] = useState(null);
 
   useEffect(() => {
+    if (!isPushNotifEnabled) {
+      return;
+    }
+
     if (!isAuthenticated || !userId) {
       return;
     }
@@ -103,6 +114,10 @@ const NotificationBootstrap = () => {
   }, [isAuthenticated, pendingOrderId]);
 
   useEffect(() => {
+    if (!isPushNotifEnabled) {
+      return;
+    }
+
     const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
       const orderId = getOrderIdFromNotificationResponse(response);
       if (!orderId) {
@@ -160,7 +175,7 @@ export default function App() {
         >
           <PaperProvider>
             <StatusBar style="dark" backgroundColor={colors.background} />
-            <NotificationBootstrap />
+            {isPushNotifEnabled ? <NotificationBootstrap /> : null}
             <DrawerNavigator />
           </PaperProvider>
         </NavigationContainer>
