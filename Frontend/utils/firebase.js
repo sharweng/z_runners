@@ -1,5 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
+  initializeAuth,
+  getReactNativePersistence,
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -8,6 +10,7 @@ import {
   GoogleAuthProvider,
   FacebookAuthProvider,
 } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || '',
@@ -37,7 +40,26 @@ const getFirebaseApp = () => {
   return initializeApp(firebaseConfig);
 };
 
-const getFirebaseAuth = () => getAuth(getFirebaseApp());
+let firebaseAuthInstance;
+
+const getFirebaseAuth = () => {
+  if (firebaseAuthInstance) {
+    return firebaseAuthInstance;
+  }
+
+  const app = getFirebaseApp();
+
+  try {
+    firebaseAuthInstance = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage),
+    });
+  } catch (error) {
+    // Hot reload can re-enter initializeAuth; getAuth returns existing instance.
+    firebaseAuthInstance = getAuth(app);
+  }
+
+  return firebaseAuthInstance;
+};
 
 export const createFirebaseUser = (email, password) => {
   return createUserWithEmailAndPassword(getFirebaseAuth(), email, password);
