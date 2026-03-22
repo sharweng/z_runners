@@ -105,3 +105,29 @@ export const getOrderIdFromNotificationResponse = (response) => {
   const orderId = String(data?.orderId || data?.orderID || data?.id || '').trim();
   return orderId || null;
 };
+
+export const getDiscountAlertFromNotificationResponse = (response) => {
+  const data = response?.notification?.request?.content?.data || {};
+  const type = String(data?.type || '').trim().toLowerCase();
+
+  if (type !== 'discount_alert') {
+    return null;
+  }
+
+  const alertId = String(data?.alertId || data?.id || '').trim();
+  if (!alertId) {
+    return null;
+  }
+
+  return {
+    alertId,
+    title: String(response?.notification?.request?.content?.title || 'Discount Alert').trim(),
+    body: String(response?.notification?.request?.content?.body || data?.details || '').trim(),
+    code: String(data?.code || '').trim(),
+    discountType: String(data?.discountType || '').trim(),
+    discountValue: Number(data?.discountValue || 0),
+    minOrderAmount: Number(data?.minOrderAmount || 0),
+    expiresAt: data?.expiresAt || null,
+    details: String(data?.details || '').trim(),
+  };
+};

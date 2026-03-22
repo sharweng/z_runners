@@ -12,11 +12,28 @@ const Tab = createMaterialTopTabNavigator();
 function MyTabs() {
     return (
         <Tab.Navigator
+            screenListeners={{
+                tabPress: (e) => {
+                    e.preventDefault();
+                },
+            }}
             screenOptions={{
+                swipeEnabled: false,
                 tabBarActiveTintColor: colors.accent,
                 tabBarInactiveTintColor: colors.muted,
-                tabBarIndicatorStyle: { backgroundColor: colors.accent },
-                tabBarStyle: { backgroundColor: colors.surface },
+                tabBarIndicatorStyle: { backgroundColor: colors.accent, height: 3 },
+                tabBarStyle: {
+                    backgroundColor: colors.surface,
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border,
+                },
+                tabBarItemStyle: {
+                    flex: 1,
+                },
+                tabBarLabelStyle: {
+                    fontWeight: '800',
+                    fontSize: 12,
+                },
             }}
         >
             <Tab.Screen name="Shipping" component={Checkout} />

@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react'
-import { Text, View, Button, SafeAreaView, Select, StyleSheet } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native'
 
-import Icon from 'react-native-vector-icons/FontAwesome'
 import FormContainer from '../../Shared/FormContainer'
 import Input from '../../Shared/Input'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
@@ -19,6 +18,7 @@ import { colors, spacing } from '../../Shared/theme'
 import { replaceSavedCartItems } from '../Cart/cartStorage';
 import { getJwtToken } from '../../utils/tokenStorage';
 import { fetchCheckoutQuote } from '../../Redux/Actions/orderActions';
+
 const Checkout = (props) => {
     const [user, setUser] = useState('')
     const [orderItems, setOrderItems] = useState([])
@@ -28,6 +28,8 @@ const Checkout = (props) => {
     const [zip, setZip] = useState('')
     const [country, setCountry] = useState('Philippines')
     const [phone, setPhone] = useState('')
+    const [discountCode, setDiscountCode] = useState('')
+    const [discountPreview, setDiscountPreview] = useState(null)
 
     const navigation = useNavigation()
     const dispatch = useDispatch();
@@ -107,6 +109,60 @@ const Checkout = (props) => {
         };
     }, [context?.stateUser?.isAuthenticated, context?.stateUser?.user?.userId]);
 
+    const requestQuote = async (shouldNavigate) => {
+        const token = await getJwtToken();
+        const quote = await dispatch(fetchCheckoutQuote({
+            orderItems,
+            discountCode: discountCode.trim().toUpperCase(),
+        }, token));
+
+        setDiscountPreview(quote || null);
+
+        if (quote?.discountError) {
+            Toast.show({
+                topOffset: 60,
+                type: 'error',
+                text1: 'Discount not applied',
+                text2: quote.discountError,
+            });
+        } else if (quote?.discountAmount > 0) {
+            Toast.show({
+                topOffset: 60,
+                type: 'success',
+                text1: 'Discount applied',
+                text2: `${quote.discountCode} saved $ ${Number(quote.discountAmount).toFixed(2)}`,
+            });
+        }
+
+        if (Array.isArray(quote?.unavailableItems) && quote.unavailableItems.length > 0) {
+            Toast.show({
+                topOffset: 60,
+                type: 'error',
+                text1: 'Some items are unavailable',
+                text2: 'Please update your cart quantities.',
+            });
+            return;
+        }
+
+        if (shouldNavigate) {
+            let order = {
+                city,
+                country,
+                dateOrdered: Date.now(),
+                orderItems,
+                phone,
+                shippingAddress1: address,
+                shippingAddress2: address2,
+                status: 'pending',
+                user,
+                zip,
+                discountCode: quote?.discountCode || discountCode.trim().toUpperCase(),
+            }
+
+            navigation.navigate('Payment', { order, quote });
+        }
+    };
+
     const checkOut = async () => {
         if (!orderItems || orderItems.length === 0) {
             Toast.show({
@@ -131,33 +187,9 @@ const Checkout = (props) => {
 
         const ownerKey = user ? `user:${user}` : 'guest';
         await replaceSavedCartItems(ownerKey, orderItems);
-        let order = {
-            city,
-            country,
-            dateOrdered: Date.now(),
-            orderItems,
-            phone,
-            shippingAddress1: address,
-            shippingAddress2: address2,
-            status: "pending",
-            user,
-            zip,
-        }
 
         try {
-            const token = await getJwtToken();
-            const quote = await dispatch(fetchCheckoutQuote({ orderItems }, token));
-            if (Array.isArray(quote?.unavailableItems) && quote.unavailableItems.length > 0) {
-                Toast.show({
-                    topOffset: 60,
-                    type: 'error',
-                    text1: 'Some items are unavailable',
-                    text2: 'Please update your cart quantities.',
-                });
-                return;
-            }
-
-            navigation.navigate("Payment", { order, quote })
+            await requestQuote(true);
         } catch (error) {
             const message = error?.response?.data?.message || error?.message || 'Unable to validate checkout';
             Toast.show({
@@ -168,6 +200,31 @@ const Checkout = (props) => {
             });
         }
     }
+
+    const applyDiscount = async () => {
+        if (!discountCode.trim()) {
+            Toast.show({
+                topOffset: 60,
+                type: 'error',
+                text1: 'Enter a discount code',
+                text2: 'Add a code first before applying.',
+            });
+            return;
+        }
+
+        try {
+            await requestQuote(false);
+        } catch (error) {
+            const message = error?.response?.data?.message || error?.message || 'Unable to validate discount';
+            Toast.show({
+                topOffset: 60,
+                type: 'error',
+                text1: 'Discount check failed',
+                text2: `${message}`,
+            });
+        }
+    };
+
     return (
 
         <KeyboardAwareScrollView
@@ -228,9 +285,52 @@ const Checkout = (props) => {
 
                 </Picker>
 
+                <Input
+                    placeholder={'Discount Code'}
+                    name={'discountCode'}
+                    value={discountCode}
+                    onChangeText={(text) => setDiscountCode((text || '').toUpperCase())}
+                />
 
-                <View style={{ width: '80%', alignItems: "center" }}>
-                    <Button color={colors.primary} title={quoteLoading ? 'VALIDATING...' : 'CONFIRM SHIPPING'} onPress={() => checkOut()} disabled={quoteLoading} />
+                {discountPreview ? (
+                    <View style={styles.discountPreviewWrap}>
+                        <Text style={styles.discountPreviewText}>
+                            Discount: $ {Number(discountPreview.discountAmount || 0).toFixed(2)}
+                        </Text>
+                        <Text style={styles.discountPreviewSubtext}>
+                            Total after discount: $ {Number(discountPreview.totalPrice || 0).toFixed(2)}
+                        </Text>
+                    </View>
+                ) : null}
+
+                <View style={styles.buttonStack}>
+                    <TouchableOpacity
+                        style={[styles.actionButton, styles.secondaryButton]}
+                        onPress={applyDiscount}
+                        disabled={quoteLoading}
+                    >
+                        <Text style={styles.secondaryButtonText}>APPLY DISCOUNT</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.actionButton, quoteLoading && styles.actionButtonDisabled]}
+                        onPress={() => checkOut()}
+                        disabled={quoteLoading}
+                    >
+                        {quoteLoading ? (
+                            <ActivityIndicator color={colors.surface} size="small" />
+                        ) : (
+                            <Text style={styles.actionButtonText}>CONFIRM SHIPPING</Text>
+                        )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.actionButton, styles.secondaryButton]}
+                        onPress={() => navigation.navigate('Cart Screen', { screen: 'Cart' })}
+                        disabled={quoteLoading}
+                    >
+                        <Text style={styles.secondaryButtonText}>BACK TO CART</Text>
+                    </TouchableOpacity>
                 </View>
             </FormContainer>
         </KeyboardAwareScrollView>
@@ -245,6 +345,54 @@ const styles = StyleSheet.create({
         marginTop: spacing.sm,
         borderWidth: 2,
         borderColor: colors.border,
+    },
+    discountPreviewWrap: {
+        width: '100%',
+        marginTop: spacing.sm,
+        padding: spacing.md,
+        borderWidth: 2,
+        borderColor: colors.border,
+        backgroundColor: colors.surfaceSoft,
+    },
+    discountPreviewText: {
+        color: colors.success,
+        fontWeight: '800',
+    },
+    discountPreviewSubtext: {
+        color: colors.text,
+        marginTop: 4,
+        fontWeight: '600',
+    },
+    buttonStack: {
+        width: '100%',
+        marginTop: spacing.md,
+        gap: spacing.sm,
+    },
+    actionButton: {
+        width: '100%',
+        minHeight: 52,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.primary,
+        borderWidth: 2,
+        borderColor: colors.primary,
+    },
+    actionButtonDisabled: {
+        opacity: 0.7,
+    },
+    actionButtonText: {
+        color: colors.surface,
+        fontWeight: '800',
+        letterSpacing: 0.3,
+    },
+    secondaryButton: {
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+    },
+    secondaryButtonText: {
+        color: colors.text,
+        fontWeight: '800',
+        letterSpacing: 0.3,
     },
 });
 

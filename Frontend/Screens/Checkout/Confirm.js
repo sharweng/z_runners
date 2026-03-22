@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useMemo, useRef } from 'react'
-import { View, StyleSheet, Dimensions, ScrollView, Button, Text, ActivityIndicator } from "react-native";
+import { View, StyleSheet, Dimensions, ScrollView, Text, ActivityIndicator, TouchableOpacity } from "react-native";
 import { Surface } from 'react-native-paper';
 
 
@@ -37,6 +37,13 @@ const Confirm = (props) => {
     }, [order, cartItems]);
 
     const hasOrderItems = Array.isArray(liveOrder?.orderItems) && liveOrder.orderItems.length > 0;
+
+    const renderKeyValueRow = (label, value, isStrong = false) => (
+        <View style={styles.kvRow}>
+            <Text style={[styles.kvLabel, isStrong && styles.kvStrong]}>{label}</Text>
+            <Text style={[styles.kvValue, isStrong && styles.kvStrong]} numberOfLines={2}>{value}</Text>
+        </View>
+    );
 
     useEffect(() => {
         if (!order || hasOrderItems || didShowEmptyToastRef.current) {
@@ -128,34 +135,42 @@ const Confirm = (props) => {
                         <View style={styles.card}>
                             <Text style={styles.title}>Shipping to:</Text>
                             <View style={styles.cardBody}>
-                                <Text>Address: {liveOrder.shippingAddress1}</Text>
-                                <Text>Address2: {liveOrder.shippingAddress2}</Text>
-                                <Text>City: {liveOrder.city}</Text>
-                                <Text>Zip Code: {liveOrder.zip}</Text>
-                                <Text>Country: {liveOrder.country}</Text>
+                                {renderKeyValueRow('Address', liveOrder.shippingAddress1 || '-')}
+                                {renderKeyValueRow('Address 2', liveOrder.shippingAddress2 || '-')}
+                                {renderKeyValueRow('City', liveOrder.city || '-')}
+                                {renderKeyValueRow('Zip Code', liveOrder.zip || '-')}
+                                {renderKeyValueRow('Country', liveOrder.country || '-')}
                             </View>
-                            <Text style={styles.title}>items</Text>
+                            <Text style={styles.title}>Items</Text>
+
+                            <View style={styles.itemHeaderRow}>
+                                <Text style={[styles.itemHeaderText, styles.itemNameCol]}>Item</Text>
+                                <Text style={[styles.itemHeaderText, styles.itemQtyCol]}>Qty</Text>
+                                <Text style={[styles.itemHeaderText, styles.itemPriceCol]}>Price</Text>
+                            </View>
 
                             {liveOrder.orderItems?.map((item) => {
                                 return (
                                     <Surface key={item.id} style={styles.itemCard}>
-                                        <Text style={styles.itemName}>
+                                        <Text style={[styles.itemName, styles.itemNameCol]} numberOfLines={1}>
                                             {item.name}
                                         </Text>
-                                        <Text style={styles.itemPrice}>
-                                            $ {(Number(item?.price) || 0).toFixed(2)} x {Number(item?.quantity) || 1}
+                                        <Text style={[styles.itemMeta, styles.itemQtyCol]}>
+                                            {Number(item?.quantity) || 1}
                                         </Text>
-
-
+                                        <Text style={[styles.itemPrice, styles.itemPriceCol]}>
+                                            $ {(Number(item?.price) || 0).toFixed(2)}
+                                        </Text>
                                     </Surface>
                                 )
                             })}
                             <View style={styles.summaryWrap}>
-                                <Text style={styles.summaryText}>Subtotal: $ {Number(quote?.subtotal || 0).toFixed(2)}</Text>
-                                <Text style={styles.summaryText}>Tax: $ {Number(quote?.taxAmount || 0).toFixed(2)}</Text>
-                                <Text style={styles.summaryText}>Shipping: $ {Number(quote?.shippingFee || 0).toFixed(2)}</Text>
-                                <Text style={styles.summaryTotal}>Total: $ {Number(quote?.totalPrice || 0).toFixed(2)}</Text>
-                                <Text style={styles.paymentMeta}>Payment: {paymentMethod || 'Card'}</Text>
+                                {renderKeyValueRow('Subtotal', `$ ${Number(quote?.subtotal || 0).toFixed(2)}`)}
+                                {renderKeyValueRow('Discount', `-$ ${Number(quote?.discountAmount || 0).toFixed(2)}`)}
+                                {renderKeyValueRow('Tax', `$ ${Number(quote?.taxAmount || 0).toFixed(2)}`)}
+                                {renderKeyValueRow('Shipping', `$ ${Number(quote?.shippingFee || 0).toFixed(2)}`)}
+                                {renderKeyValueRow('Total', `$ ${Number(quote?.totalPrice || 0).toFixed(2)}`, true)}
+                                {renderKeyValueRow('Payment', paymentMethod || 'Card')}
                             </View>
                         </View>
                     ) : null}
@@ -164,13 +179,21 @@ const Confirm = (props) => {
                             Failed to place order. Please retry.
                         </Text>
                     ) : null}
-                    <View style={{ alignItems: "center", margin: 20 }}>
-                        <Button
-                            color={colors.primary}
-                            title={creating ? "Placing order..." : "Place order"}
+                    <View style={styles.actionWrap}>
+                        <TouchableOpacity
+                            style={[styles.actionButton, creating && styles.actionButtonDisabled]}
                             onPress={confirmOrder}
                             disabled={creating || !hasOrderItems}
-                        />
+                        >
+                            <Text style={styles.actionButtonText}>{creating ? 'PLACING ORDER...' : 'PLACE ORDER'}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.actionButton, styles.secondaryButton]}
+                            onPress={() => navigation.navigate('Payment', { order, quote, paymentMethod, paymentToken })}
+                            disabled={creating}
+                        >
+                            <Text style={styles.secondaryButtonText}>BACK TO PAYMENT</Text>
+                        </TouchableOpacity>
                         {creating ? (
                             <ActivityIndicator style={styles.loadingIndicator} size="small" color={colors.primary} />
                         ) : null}
@@ -212,10 +235,39 @@ const styles = StyleSheet.create({
         padding: spacing.md,
     },
     cardBody: {
-        margin: 10,
-        alignItems: "center",
-        flexDirection: "column",
-        width: "90%",
+        marginVertical: spacing.sm,
+        width: '100%',
+    },
+    kvRow: {
+        flexDirection: 'row',
+        width: '100%',
+        marginBottom: 6,
+        alignItems: 'flex-start',
+    },
+    kvLabel: {
+        width: 108,
+        color: colors.muted,
+        fontWeight: '700',
+    },
+    kvValue: {
+        flex: 1,
+        color: colors.text,
+        fontWeight: '600',
+    },
+    kvStrong: {
+        color: colors.primary,
+        fontWeight: '800',
+    },
+    itemHeaderRow: {
+        marginTop: spacing.sm,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+        paddingBottom: 6,
+        flexDirection: 'row',
+    },
+    itemHeaderText: {
+        color: colors.muted,
+        fontWeight: '800',
     },
     itemCard: {
         marginTop: spacing.md,
@@ -225,12 +277,26 @@ const styles = StyleSheet.create({
         backgroundColor: colors.surfaceSoft,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+    },
+    itemNameCol: {
+        flex: 1,
+        paddingRight: 8,
+    },
+    itemQtyCol: {
+        width: 48,
+        textAlign: 'center',
+    },
+    itemPriceCol: {
+        width: 96,
+        textAlign: 'right',
     },
     itemName: {
         fontWeight: '700',
         color: colors.text,
-        marginTop: spacing.sm,
+    },
+    itemMeta: {
+        color: colors.text,
+        fontWeight: '600',
     },
     itemPrice: {
         color: colors.primary,
@@ -242,19 +308,6 @@ const styles = StyleSheet.create({
         borderTopColor: colors.border,
         paddingTop: spacing.sm,
     },
-    summaryText: {
-        color: colors.text,
-        marginBottom: 4,
-    },
-    summaryTotal: {
-        color: colors.primary,
-        fontWeight: '800',
-        marginTop: 4,
-    },
-    paymentMeta: {
-        color: colors.muted,
-        marginTop: 6,
-    },
     errorText: {
         color: colors.danger,
         fontWeight: '700',
@@ -262,6 +315,37 @@ const styles = StyleSheet.create({
     },
     loadingIndicator: {
         marginTop: spacing.sm,
+    },
+    actionWrap: {
+        width: '100%',
+        marginTop: spacing.md,
+        gap: spacing.sm,
+    },
+    actionButton: {
+        width: '100%',
+        minHeight: 52,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.primary,
+        borderWidth: 2,
+        borderColor: colors.primary,
+    },
+    actionButtonDisabled: {
+        opacity: 0.7,
+    },
+    actionButtonText: {
+        color: colors.surface,
+        fontWeight: '800',
+        letterSpacing: 0.3,
+    },
+    secondaryButton: {
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+    },
+    secondaryButtonText: {
+        color: colors.text,
+        fontWeight: '800',
+        letterSpacing: 0.3,
     },
 });
 export default Confirm;

@@ -7,6 +7,7 @@ import Orders from "../Screens/Admin/Orders"
 import Products from "../Screens/Admin/Products"
 import ProductForm from "../Screens/Admin/ProductForm"
 import Categories from "../Screens/Admin/Categories"
+import Discounts from "../Screens/Admin/Discounts"
 import OrderDetails from "../Screens/User/OrderDetails"
 import SingleProduct from "../Screens/Product/SingleProduct"
 import AuthGlobal from "../Context/Store/AuthGlobal"
@@ -29,6 +30,7 @@ const AdminTabs = () => {
             <Tab.Screen name="Products" component={Products} />
             <Tab.Screen name="Orders" component={Orders} />
             <Tab.Screen name="Categories" component={Categories} />
+            <Tab.Screen name="Discounts" component={Discounts} />
         </Tab.Navigator>
     );
 };

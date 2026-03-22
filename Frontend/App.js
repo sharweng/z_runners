@@ -3,6 +3,8 @@ if (!global.setImmediate) {
   global.setImmediate = setTimeout;
 }
 import { StatusBar } from 'expo-status-bar';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native'
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
@@ -21,7 +23,13 @@ import {
   replaceSavedCartItems,
 } from './Screens/Cart/cartStorage';
 import { navigationRef, navigateToOrderDetails, flushPendingOrderNavigation } from './utils/navigation';
-import { getOrderIdFromNotificationResponse, registerPushTokenForUser } from './utils/pushNotifications';
+import {
+  getDiscountAlertFromNotificationResponse,
+  getOrderIdFromNotificationResponse,
+  registerPushTokenForUser,
+} from './utils/pushNotifications';
+
+const NOTIFICATION_ALERT_SEEN_PREFIX = 'notif_seen_discount_alert_';
 
 const isPushNotifEnabled = ['1', 'true', 'yes', 'on'].includes(
   String(process.env.EXPO_PUBLIC_PUSH_NOTIF ?? process.env.push_notif ?? 'false').trim().toLowerCase()
@@ -91,6 +99,27 @@ const NotificationBootstrap = () => {
   const userId = context?.stateUser?.user?.userId;
   const isAuthenticated = !!context?.stateUser?.isAuthenticated;
   const [pendingOrderId, setPendingOrderId] = useState(null);
+  const [activeDiscountAlert, setActiveDiscountAlert] = useState(null);
+
+  const maybeShowDiscountAlertPopup = async (payload) => {
+    if (!payload?.alertId) {
+      return;
+    }
+
+    const storageKey = `${NOTIFICATION_ALERT_SEEN_PREFIX}${payload.alertId}`;
+
+    try {
+      const seen = await AsyncStorage.getItem(storageKey);
+      if (seen === '1') {
+        return;
+      }
+
+      await AsyncStorage.setItem(storageKey, '1');
+      setActiveDiscountAlert(payload);
+    } catch (error) {
+      setActiveDiscountAlert(payload);
+    }
+  };
 
   useEffect(() => {
     if (!isPushNotifEnabled) {
@@ -119,6 +148,11 @@ const NotificationBootstrap = () => {
     }
 
     const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const discountAlert = getDiscountAlertFromNotificationResponse(response);
+      if (discountAlert) {
+        maybeShowDiscountAlertPopup(discountAlert);
+      }
+
       const orderId = getOrderIdFromNotificationResponse(response);
       if (!orderId) {
         return;
@@ -138,6 +172,11 @@ const NotificationBootstrap = () => {
 
     Notifications.getLastNotificationResponseAsync()
       .then((response) => {
+        const discountAlert = getDiscountAlertFromNotificationResponse(response);
+        if (discountAlert) {
+          maybeShowDiscountAlertPopup(discountAlert);
+        }
+
         const orderId = getOrderIdFromNotificationResponse(response);
         if (orderId) {
           if (!isAuthenticated) {
@@ -161,7 +200,34 @@ const NotificationBootstrap = () => {
     };
   }, [isAuthenticated]);
 
-  return null;
+  return (
+    <Modal
+      visible={!!activeDiscountAlert}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setActiveDiscountAlert(null)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalCard}>
+          <Text style={styles.modalTitle}>{activeDiscountAlert?.title || 'Discount Alert'}</Text>
+          <Text style={styles.modalBody}>{activeDiscountAlert?.body || activeDiscountAlert?.details || 'Check out the latest discount in the app.'}</Text>
+          {activeDiscountAlert?.code ? (
+            <Text style={styles.modalMeta}>Code: {activeDiscountAlert.code}</Text>
+          ) : null}
+          {activeDiscountAlert?.minOrderAmount > 0 ? (
+            <Text style={styles.modalMeta}>Minimum order: $ {Number(activeDiscountAlert.minOrderAmount).toFixed(2)}</Text>
+          ) : null}
+          {activeDiscountAlert?.expiresAt ? (
+            <Text style={styles.modalMeta}>Ends: {new Date(activeDiscountAlert.expiresAt).toLocaleDateString()}</Text>
+          ) : null}
+
+          <Pressable style={styles.modalButton} onPress={() => setActiveDiscountAlert(null)}>
+            <Text style={styles.modalButtonText}>CLOSE</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
 };
 
 export default function App() {
@@ -185,3 +251,51 @@ export default function App() {
 
   );
 }
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(5, 15, 30, 0.72)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 420,
+    borderWidth: 2,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: 18,
+  },
+  modalTitle: {
+    color: colors.primary,
+    fontWeight: '900',
+    fontSize: 20,
+    marginBottom: 10,
+  },
+  modalBody: {
+    color: colors.text,
+    fontWeight: '600',
+    marginBottom: 10,
+  },
+  modalMeta: {
+    color: colors.muted,
+    marginBottom: 4,
+    fontWeight: '600',
+  },
+  modalButton: {
+    marginTop: 12,
+    minHeight: 46,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonText: {
+    color: colors.surface,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+});

@@ -3,7 +3,6 @@ import { createStackNavigator } from "@react-navigation/stack"
 
 import Cart from '../Screens/Cart/Cart';
 import CheckoutNavigator from './CheckoutNavigator';
-import { colors } from '../Shared/theme';
 import AuthGlobal from '../Context/Store/AuthGlobal';
 
 const Stack = createStackNavigator();
@@ -26,9 +25,7 @@ function MyStack() {
                     name="Checkout"
                     component={CheckoutNavigator}
                     options={{
-                        title: 'Checkout',
-                        headerStyle: { backgroundColor: colors.surface },
-                        headerTintColor: colors.text,
+                        headerShown: false,
                     }}
                 />
             ) : null}
