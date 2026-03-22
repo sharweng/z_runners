@@ -10,27 +10,9 @@ import AuthGlobal from '../../Context/Store/AuthGlobal'
 import {
     loginUser,
     loginWithFirebaseEmail,
-    loginWithGoogle,
-    loginWithFacebook,
 } from '../../Context/Actions/Auth.actions'
 import Input from "../../Shared/Input";
 import { colors, spacing } from "../../Shared/theme";
-
-const createUnavailableAuthProvider = () => ({
-    useAuthRequest: () => [null, null, async () => ({ type: 'unavailable' })],
-});
-
-let GoogleProvider = createUnavailableAuthProvider();
-let FacebookProvider = createUnavailableAuthProvider();
-
-try {
-    const WebBrowser = require('expo-web-browser');
-    WebBrowser.maybeCompleteAuthSession?.();
-    GoogleProvider = require('expo-auth-session/providers/google');
-    FacebookProvider = require('expo-auth-session/providers/facebook');
-} catch (error) {
-    console.log('Social auth temporarily disabled:', error?.message || error);
-}
 
 const Login = (props) => {
     const context = useContext(AuthGlobal)
@@ -39,21 +21,6 @@ const Login = (props) => {
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
-
-    const [googleRequest, googleResponse, promptGoogleAsync] = GoogleProvider.useAuthRequest({
-        expoClientId: process.env.EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID || undefined,
-        androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || undefined,
-        iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || undefined,
-        webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || undefined,
-        scopes: ['profile', 'email'],
-        responseType: 'id_token',
-    });
-
-    const [facebookRequest, facebookResponse, promptFacebookAsync] = FacebookProvider.useAuthRequest({
-        clientId: process.env.EXPO_PUBLIC_FACEBOOK_APP_ID || '',
-        scopes: ['public_profile', 'email'],
-        responseType: 'token',
-    });
 
     const handleSubmit = async () => {
         const user = {
@@ -92,64 +59,6 @@ const Login = (props) => {
             setLoading(false);
         }
     };
-
-    useEffect(() => {
-        if (googleResponse?.type !== 'success') {
-            return;
-        }
-
-        const idToken = googleResponse?.params?.id_token || googleResponse?.authentication?.idToken;
-        if (!idToken) {
-            Toast.show({
-                topOffset: 60,
-                type: 'error',
-                text1: 'Google login failed',
-                text2: 'No ID token received',
-            });
-            return;
-        }
-
-        setLoading(true);
-        loginWithGoogle({ idToken }, context.dispatch)
-            .catch((error) => {
-                Toast.show({
-                    topOffset: 60,
-                    type: 'error',
-                    text1: 'Google login failed',
-                    text2: error?.message || 'Please try again',
-                });
-            })
-            .finally(() => setLoading(false));
-    }, [googleResponse]);
-
-    useEffect(() => {
-        if (facebookResponse?.type !== 'success') {
-            return;
-        }
-
-        const accessToken = facebookResponse?.params?.access_token || facebookResponse?.authentication?.accessToken;
-        if (!accessToken) {
-            Toast.show({
-                topOffset: 60,
-                type: 'error',
-                text1: 'Facebook login failed',
-                text2: 'No access token received',
-            });
-            return;
-        }
-
-        setLoading(true);
-        loginWithFacebook({ accessToken }, context.dispatch)
-            .catch((error) => {
-                Toast.show({
-                    topOffset: 60,
-                    type: 'error',
-                    text1: 'Facebook login failed',
-                    text2: error?.message || 'Please try again',
-                });
-            })
-            .finally(() => setLoading(false));
-    }, [facebookResponse]);
 
     useEffect(() => {
         if (context.stateUser.isAuthenticated === true) {
@@ -227,24 +136,6 @@ const Login = (props) => {
                 </TouchableOpacity>
             </View>
             <View style={styles.buttonGroup}>
-                <TouchableOpacity
-                    style={[styles.actionButton, styles.googleButton]}
-                    activeOpacity={0.85}
-                    onPress={() => promptGoogleAsync({ useProxy: true })}
-                    disabled={!googleRequest || loading}
-                >
-                    <Text style={styles.socialButtonText}>CONTINUE WITH GOOGLE</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.actionButton, styles.facebookButton]}
-                    activeOpacity={0.85}
-                    onPress={() => promptFacebookAsync({ useProxy: true })}
-                    disabled={!facebookRequest || loading}
-                >
-                    <Text style={[styles.socialButtonText, styles.socialButtonTextLight]}>CONTINUE WITH FACEBOOK</Text>
-                </TouchableOpacity>
-            </View>
-            <View style={styles.buttonGroup}>
                 <Text style={styles.middleText}>Dont' Have an Account yet?</Text>
                 <TouchableOpacity style={[styles.actionButton, styles.registerButton]} activeOpacity={0.85} onPress={() => navigation.navigate("Register")}>
                     <Text style={styles.registerButtonText}>REGISTER</Text>
@@ -303,27 +194,10 @@ const styles = StyleSheet.create({
         backgroundColor: colors.surfaceSoft,
         borderColor: colors.border,
     },
-    googleButton: {
-        marginBottom: spacing.sm,
-        backgroundColor: '#ffffff',
-        borderColor: colors.border,
-    },
-    facebookButton: {
-        backgroundColor: '#1877F2',
-        borderColor: '#1877F2',
-    },
     loginButtonText: {
         color: colors.surface,
         fontWeight: '800',
         letterSpacing: 0.8,
-    },
-    socialButtonText: {
-        color: colors.text,
-        fontWeight: '800',
-        letterSpacing: 0.6,
-    },
-    socialButtonTextLight: {
-        color: '#ffffff',
     },
     registerButtonText: {
         color: colors.primary,

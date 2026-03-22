@@ -11,7 +11,7 @@ import { getJwtToken } from '../../utils/tokenStorage';
 
 const formatMoney = (value) => {
   const amount = Number(value) || 0;
-  return `$${amount.toFixed(2)}`;
+  return `PHP ${amount.toFixed(2)}`;
 };
 
 const formatDate = (rawDate) => {

@@ -195,16 +195,16 @@ const Confirm = (props) => {
                                 {Number(item?.quantity) || 1}
                             </Text>
                             <Text style={[styles.itemPrice, styles.itemPriceCol]}>
-                                $ {(Number(item?.price) || 0).toFixed(2)}
+                                PHP {(Number(item?.price) || 0).toFixed(2)}
                             </Text>
                         </Surface>
                     ))}
 
                     <View style={styles.summaryWrap}>
-                        {renderKeyValueRow('Subtotal', `$ ${Number(quote?.subtotal || 0).toFixed(2)}`)}
-                        {renderKeyValueRow('Discount', `-$ ${Number(quote?.discountAmount || 0).toFixed(2)}`)}
-                        {renderKeyValueRow('Shipping', `$ ${Number(quote?.shippingFee || 0).toFixed(2)}`)}
-                        {renderKeyValueRow('Total', `$ ${Number(quote?.totalPrice || 0).toFixed(2)}`, true)}
+                        {renderKeyValueRow('Subtotal', `PHP ${Number(quote?.subtotal || 0).toFixed(2)}`)}
+                        {renderKeyValueRow('Discount', `-PHP ${Number(quote?.discountAmount || 0).toFixed(2)}`)}
+                        {renderKeyValueRow('Shipping', `PHP ${Number(quote?.shippingFee || 0).toFixed(2)}`)}
+                        {renderKeyValueRow('Total', `PHP ${Number(quote?.totalPrice || 0).toFixed(2)}`, true)}
                         {renderKeyValueRow('Payment', paymentMethod || 'Card')}
                     </View>
 

@@ -130,7 +130,7 @@ const Checkout = (props) => {
                 topOffset: 60,
                 type: 'success',
                 text1: 'Discount applied',
-                text2: `${quote.discountCode} saved $ ${Number(quote.discountAmount).toFixed(2)}`,
+                text2: `${quote.discountCode} saved PHP ${Number(quote.discountAmount).toFixed(2)}`,
             });
         }
 
@@ -298,10 +298,10 @@ const Checkout = (props) => {
                 {discountPreview ? (
                     <View style={styles.discountPreviewWrap}>
                         <Text style={styles.discountPreviewText}>
-                            Discount: $ {Number(discountPreview.discountAmount || 0).toFixed(2)}
+                            Discount: PHP {Number(discountPreview.discountAmount || 0).toFixed(2)}
                         </Text>
                         <Text style={styles.discountPreviewSubtext}>
-                            Total after discount: $ {Number(discountPreview.totalPrice || 0).toFixed(2)}
+                            Total after discount: PHP {Number(discountPreview.totalPrice || 0).toFixed(2)}
                         </Text>
                     </View>
                 ) : null}

@@ -30,6 +30,11 @@ const ProductContainer = ({ route }) => {
     const dispatch = useDispatch();
     const { items: products, loading: productsLoading } = useSelector((state) => state.products);
     const { items: categories } = useSelector((state) => state.categories);
+    const isSearching =
+        keyword.trim().length > 0 ||
+        selectedCategory !== 'all' ||
+        minPrice.trim().length > 0 ||
+        maxPrice.trim().length > 0;
 
     const getCategoryId = (product) => {
         if (!product || !product.category) return null;
@@ -141,8 +146,8 @@ const ProductContainer = ({ route }) => {
         setLoading(productsLoading);
     }, [productsLoading]);
 
-    const renderFilters = () => (
-        <View style={styles.filtersSection}>
+    const renderFilters = (compact = false) => (
+        <View style={[styles.filtersSection, compact ? styles.filtersSectionCompact : null]}>
             <View style={styles.searchCard}>
                 <Ionicons name="search" size={18} color={colors.muted} />
                 <TextInput
@@ -234,15 +239,16 @@ const ProductContainer = ({ route }) => {
                 </View>
             ) : null}
 
-            {focus ? (
+            {isSearching ? (
                 <View style={styles.focusContainer}>
                     <CategoryFilter
                         categories={categories}
                         categoryFilter={changeCtg}
                         active={active}
                         setActive={setActive}
+                        compact
                     />
-                    {renderFilters()}
+                    {renderFilters(true)}
                     <SearchedProduct productsFiltered={productsFiltered} />
                 </View>
             ) : (
@@ -292,6 +298,11 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: colors.border,
         paddingTop: spacing.md,
+    },
+    filtersSectionCompact: {
+        marginTop: spacing.xs,
+        marginBottom: spacing.sm,
+        paddingTop: spacing.sm,
     },
     searchCard: {
         borderWidth: 2,

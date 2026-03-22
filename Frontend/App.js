@@ -215,7 +215,7 @@ const NotificationBootstrap = () => {
             <Text style={styles.modalMeta}>Code: {activeDiscountAlert.code}</Text>
           ) : null}
           {activeDiscountAlert?.minOrderAmount > 0 ? (
-            <Text style={styles.modalMeta}>Minimum order: $ {Number(activeDiscountAlert.minOrderAmount).toFixed(2)}</Text>
+            <Text style={styles.modalMeta}>Minimum order: PHP {Number(activeDiscountAlert.minOrderAmount).toFixed(2)}</Text>
           ) : null}
           {activeDiscountAlert?.expiresAt ? (
             <Text style={styles.modalMeta}>Ends: {new Date(activeDiscountAlert.expiresAt).toLocaleDateString()}</Text>

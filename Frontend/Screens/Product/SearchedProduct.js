@@ -22,7 +22,7 @@ const SearchedProduct = ({ productsFiltered = [] }) => {
             <View style={styles.metaWrap}>
                 <Text style={styles.name} numberOfLines={1}>{item?.name || 'Unnamed Product'}</Text>
                 <Text style={styles.desc} numberOfLines={2}>{item?.description || 'No description available'}</Text>
-                <Text style={styles.price}>${(Number(item?.price) || 0).toFixed(2)}</Text>
+                <Text style={styles.price}>PHP {(Number(item?.price) || 0).toFixed(2)}</Text>
             </View>
         </TouchableOpacity>
     );

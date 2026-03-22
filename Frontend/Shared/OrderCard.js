@@ -191,7 +191,7 @@ const OrderCard = ({
         )}
         <View style={styles.priceContainer}>
           <Text style={styles.meta}>Price</Text>
-          <Text style={styles.price}>$ {formatMoney(item.totalPrice)}</Text>
+          <Text style={styles.price}>PHP {formatMoney(item.totalPrice)}</Text>
         </View>
       </View>
     </>

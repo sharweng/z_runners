@@ -360,11 +360,11 @@ const Discounts = () => {
                 </View>
             </View>
             <Text style={styles.discountLine}>
-                {item.type === 'percentage' ? `${item.value}% off` : `$ ${Number(item.value || 0).toFixed(2)} off`}
+                {item.type === 'percentage' ? `${item.value}% off` : `PHP ${Number(item.value || 0).toFixed(2)} off`}
             </Text>
-            <Text style={styles.discountLine}>Min order: $ {Number(item.minOrderAmount || 0).toFixed(2)}</Text>
+            <Text style={styles.discountLine}>Min order: PHP {Number(item.minOrderAmount || 0).toFixed(2)}</Text>
             {item.maxDiscountAmount ? (
-                <Text style={styles.discountLine}>Max discount: $ {Number(item.maxDiscountAmount || 0).toFixed(2)}</Text>
+                <Text style={styles.discountLine}>Max discount: PHP {Number(item.maxDiscountAmount || 0).toFixed(2)}</Text>
             ) : null}
             {item.expiresAt ? (
                 <Text style={styles.discountLine}>Expires: {new Date(item.expiresAt).toLocaleDateString()}</Text>
