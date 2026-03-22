@@ -43,3 +43,7 @@ yarn-error.*
 .env
 
 .expo*
+
+# Firebase native configs
+# google-services.json
+# GoogleService-Info.plist

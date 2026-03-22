@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1004652478231",
+    "project_id": "zone-runners",
+    "storage_bucket": "zone-runners.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1004652478231:android:912993e6ed383f40520152",
+        "android_client_info": {
+          "package_name": "com.sharweng.z_runners"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1004652478231-gno468i6hgibus8jp6d1dlagiirq0glo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sharweng.z_runners",
+            "certificate_hash": "0c2f2f2b68df28d970e19922267055a7ed3936c4"
+          }
+        },
+        {
+          "client_id": "1004652478231-h3jq06ohrqc8htmt30iua1dnlv4dk0fq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLkPwDl4wmiWReZGnJS3nzwLU76xAC6n4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1004652478231-h3jq06ohrqc8htmt30iua1dnlv4dk0fq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

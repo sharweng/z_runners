@@ -12,9 +12,9 @@ import { updateOrderStatus } from '../Redux/Actions/orderActions';
 import { getJwtToken } from "../utils/tokenStorage";
 
 const adminCodes = [
-  { name: "pending", code: "pending" },
-  { name: "shipped", code: "shipped" },
-  { name: "cancelled", code: "cancelled" },
+  { name: "Pending", code: "pending" },
+  { name: "Shipped", code: "shipped" },
+  { name: "Cancelled", code: "cancelled" },
 ];
 
 const normalizeStatus = (status) => {
@@ -57,6 +57,12 @@ const getItemCount = (orderItems) => {
     return 0;
   }
 
+  // Admin order list may return order item ids only, without quantity fields.
+  const hasQuantityValues = orderItems.some((current) => Number.isFinite(Number(current?.quantity)));
+  if (!hasQuantityValues) {
+    return orderItems.length;
+  }
+
   return orderItems.reduce((count, current) => count + (Number(current?.quantity) || 0), 0);
 };
 
@@ -78,6 +84,7 @@ const OrderCard = ({
   const normalizedStatus = normalizeStatus(item.status);
   const isOrderLocked = item?.isLocked || normalizedStatus === 'delivered' || normalizedStatus === 'cancelled';
   const [statusChange, setStatusChange] = useState(normalizedStatus || 'pending');
+  const [adminUpdating, setAdminUpdating] = useState(false);
   const itemCount = getItemCount(item.orderItems);
 
   useEffect(() => {
@@ -118,29 +125,29 @@ const OrderCard = ({
 
   const dispatch = useDispatch();
 
-  const updateOrder = async () => {
+  const updateOrder = async (nextStatus = statusChange) => {
     if (isOrderLocked) {
-      Toast.show({
-        topOffset: 60,
-        type: "error",
-        text1: "Order Locked",
-        text2: "Delivered or cancelled orders cannot be updated.",
-      });
+      return;
+    }
+
+    if (!nextStatus || nextStatus === normalizedStatus) {
       return;
     }
 
     try {
+      setAdminUpdating(true);
       const token = await getJwtToken();
-      const updatedOrder = await dispatch(updateOrderStatus(item.id, statusChange, token));
+      const updatedOrder = await dispatch(updateOrderStatus(item.id, nextStatus, token));
+      setStatusChange(normalizeStatus(updatedOrder?.status || nextStatus));
       if (typeof onStatusUpdated === 'function') {
         onStatusUpdated(updatedOrder);
       }
-          Toast.show({
-            topOffset: 60,
-            type: "success",
-            text1: "Order Updated",
-            text2: "",
-          });
+      Toast.show({
+        topOffset: 60,
+        type: "success",
+        text1: "Order Updated",
+        text2: "",
+      });
     } catch (error) {
       const message = error?.message || 'Please try again';
       Toast.show({
@@ -149,10 +156,18 @@ const OrderCard = ({
         text1: "Something went wrong",
         text2: message,
       });
+    } finally {
+      setAdminUpdating(false);
     }
   }
-  const content = (
-    <View style={[styles.container, compact ? styles.compactContainer : null, { borderColor: statusMeta.cardColor }]}> 
+
+  const handleAdminStatusChange = (nextStatus) => {
+    setStatusChange(nextStatus);
+    updateOrder(nextStatus);
+  };
+
+  const summaryContent = (
+    <>
       <View style={styles.header}>
         <Text style={styles.orderNumber}>Order #{item.id}</Text>
         <View style={styles.statusPill}>
@@ -178,6 +193,19 @@ const OrderCard = ({
           <Text style={styles.meta}>Price</Text>
           <Text style={styles.price}>$ {formatMoney(item.totalPrice)}</Text>
         </View>
+      </View>
+    </>
+  );
+
+  const content = (
+    <View style={[styles.container, compact ? styles.compactContainer : null, { borderColor: statusMeta.cardColor }]}> 
+      {typeof onPressCard === 'function' ? (
+        <TouchableOpacity activeOpacity={0.92} onPress={onPressCard}>
+          {summaryContent}
+        </TouchableOpacity>
+      ) : (
+        summaryContent
+      )}
         {!update ? (
           <View style={styles.userActionsWrap}>
             {normalizedStatus === 'pending' && onCancelOrder ? (
@@ -204,53 +232,29 @@ const OrderCard = ({
             ) : null}
           </View>
         ) : null}
-        {update ? <View>
-          <>
-            {isOrderLocked ? (
-              <Text style={styles.lockedOrderText}>
-                {normalizedStatus === 'cancelled' ? 'Order Cancelled' : 'Order Delivered'}
-              </Text>
-            ) : (
-              <>
-                <Picker
-                  style={styles.picker}
-                  selectedValue={statusChange}
-                  dropdownIconColor={colors.primary}
-                  onValueChange={(e) => setStatusChange(e)}
-                >
-                  {adminCodes.map((c) => {
-                    return <Picker.Item
-                      key={c.code}
-                      label={c.name}
-                      value={c.code}
-                    />
-                  })}
-                </Picker>
-                <EasyButton
-                  secondary
-                  large
-                  style={styles.actionButton}
-                  onPress={() => updateOrder()}
-                >
-                  <Text style={{ color: "white" }}>Update</Text>
-                </EasyButton>
-              </>
-            )}
-          </>
-        </View> : null}
-
-
-      </View>
+        {update && !isOrderLocked ? (
+          <View style={styles.adminActionsWrap}>
+            <View style={[styles.adminActionControl, styles.pickerWrap]}>
+              <Picker
+                style={styles.picker}
+                selectedValue={statusChange}
+                dropdownIconColor={colors.primary}
+                enabled={!adminUpdating && !actionLoading}
+                onValueChange={handleAdminStatusChange}
+              >
+                {adminCodes.map((c) => {
+                  return <Picker.Item
+                    key={c.code}
+                    label={c.name}
+                    value={c.code}
+                  />
+                })}
+              </Picker>
+            </View>
+          </View>
+        ) : null}
     </View>
   );
-
-  if (!update && typeof onPressCard === 'function') {
-    return (
-      <TouchableOpacity activeOpacity={0.92} onPress={onPressCard}>
-        {content}
-      </TouchableOpacity>
-    );
-  }
 
   return content;
 }
@@ -281,9 +285,11 @@ const styles = StyleSheet.create({
   statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
+    minWidth: 128,
     backgroundColor: colors.surfaceSoft,
     borderWidth: 1,
     borderColor: colors.border,
@@ -310,11 +316,31 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   picker: {
+    width: '100%',
+    color: colors.text,
+  },
+  pickerWrap: {
+    marginTop: 0,
+    borderWidth: 2,
+    borderColor: colors.border,
     backgroundColor: colors.surfaceSoft,
+    width: '100%',
+    alignSelf: 'stretch',
+  },
+  adminActionsWrap: {
     marginTop: spacing.sm,
+    width: '100%',
+    alignSelf: 'stretch',
+    gap: spacing.sm,
+  },
+  adminActionControl: {
+    width: '100%',
+    alignSelf: 'stretch',
+    marginHorizontal: 0,
+    marginVertical: 0,
   },
   actionButton: {
-    alignSelf: 'flex-start',
+    alignSelf: 'stretch',
     marginTop: spacing.sm,
   },
   userActionsWrap: {
@@ -323,6 +349,7 @@ const styles = StyleSheet.create({
   },
   fullWidthAction: {
     width: '100%',
+    alignSelf: 'stretch',
     marginHorizontal: 0,
     marginVertical: 0,
     minHeight: 38,
@@ -330,17 +357,6 @@ const styles = StyleSheet.create({
   actionText: {
     color: 'white',
     fontWeight: '700',
-  },
-  lockedOrderText: {
-    color: colors.muted,
-    fontStyle: 'italic',
-    marginTop: spacing.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.surfaceSoft,
-    borderWidth: 1,
-    borderColor: colors.border,
-    textAlign: 'center',
   },
 });
 

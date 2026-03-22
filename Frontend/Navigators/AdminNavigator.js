@@ -7,6 +7,8 @@ import Orders from "../Screens/Admin/Orders"
 import Products from "../Screens/Admin/Products"
 import ProductForm from "../Screens/Admin/ProductForm"
 import Categories from "../Screens/Admin/Categories"
+import OrderDetails from "../Screens/User/OrderDetails"
+import SingleProduct from "../Screens/Product/SingleProduct"
 import AuthGlobal from "../Context/Store/AuthGlobal"
 import { colors } from "../Shared/theme"
 
@@ -55,6 +57,20 @@ const AdminNavigator = () => {
             <Stack.Screen
                 name="ProductForm"
                 component={ProductForm}
+                options={{
+                    headerShown: false,
+                }}
+            />
+            <Stack.Screen
+                name="Order Details"
+                component={OrderDetails}
+                options={{
+                    headerShown: false,
+                }}
+            />
+            <Stack.Screen
+                name="Product Detail"
+                component={SingleProduct}
                 options={{
                     headerShown: false,
                 }}

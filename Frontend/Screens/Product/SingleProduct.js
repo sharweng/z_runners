@@ -466,13 +466,7 @@ const SingleProduct = ({ route }) => {
                                 <Text style={styles.primaryButtonText}>{reviewLoading ? 'Saving...' : 'Submit Review'}</Text>
                             </TouchableOpacity>
                         </>
-                    ) : (
-                        !userReview ? (
-                            <Text style={styles.reviewEligibilityText}>
-                                Write a Review becomes available after you have a delivered order for this product.
-                            </Text>
-                        ) : null
-                    )}
+                    ) : null}
                 </View>
             </ScrollView>
         </Surface>

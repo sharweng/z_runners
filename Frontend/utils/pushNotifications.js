@@ -38,6 +38,7 @@ export const configureNotificationChannel = async () => {
 
 export const registerPushTokenForUser = async (userId) => {
   if (!isPushNotifEnabled) {
+    console.log('Push token registration skipped: notifications are disabled for this runtime (Expo Go or EXPO_PUBLIC_PUSH_NOTIF=false).');
     return null;
   }
 
@@ -84,9 +85,17 @@ export const registerPushTokenForUser = async (userId) => {
       }
     );
 
+    console.log('Push token registered for user', { userId, tokenPreview: expoPushToken.slice(0, 24) });
     return expoPushToken;
   } catch (error) {
-    console.log('Push token registration failed', error?.message || error);
+    const message = String(error?.message || error || 'unknown_error');
+    const responseDetail = error?.response?.data;
+    if (message.includes('Default FirebaseApp is not initialized')) {
+      console.log('Push token registration failed: Android Firebase config missing. Add google-services.json and rebuild the dev client.');
+      return null;
+    }
+
+    console.log('Push token registration failed', { message, responseDetail });
     return null;
   }
 };

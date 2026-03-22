@@ -12,10 +12,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 
 import AuthGlobal from "../../Context/Store/AuthGlobal"
-import { logoutUser } from "../../Context/Actions/Auth.actions"
 import Input from '../../Shared/Input';
 import { colors, spacing } from "../../Shared/theme";
-import { getJwtToken, removeJwtToken } from "../../utils/tokenStorage";
+import { getJwtToken } from "../../utils/tokenStorage";
 const countries = require("../../data/countries.json");
 
 const normalizeCountryValue = (value) => {
@@ -189,12 +188,6 @@ const UserProfile = (props) => {
         }
     }
 
-    const handleSignOut = () => {
-        navigation.navigate('Login');
-        removeJwtToken();
-        logoutUser(context.dispatch);
-    }
-
     useFocusEffect(
         useCallback(() => {
             if (
@@ -296,10 +289,6 @@ const UserProfile = (props) => {
                     {saving
                         ? <ActivityIndicator color={colors.surface} />
                         : <Text style={styles.actionButtonText}>Save Profile</Text>}
-                </TouchableOpacity>
-
-                <TouchableOpacity style={[styles.actionButton, styles.signOutButton]} onPress={handleSignOut}>
-                    <Text style={[styles.actionButtonText, styles.signOutText]}>Sign Out</Text>
                 </TouchableOpacity>
 
                 <View style={styles.bottomSpace} />
@@ -418,18 +407,10 @@ const styles = StyleSheet.create({
     saveButton: {
         backgroundColor: colors.primary,
     },
-    signOutButton: {
-        backgroundColor: colors.surface,
-        borderWidth: 2,
-        borderColor: colors.danger,
-    },
     actionButtonText: {
         color: colors.surface,
         fontSize: 16,
         fontWeight: '700',
-    },
-    signOutText: {
-        color: colors.danger,
     },
     disabledButton: {
         opacity: 0.7,

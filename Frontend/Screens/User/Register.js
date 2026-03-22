@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useNavigation } from '@react-navigation/native';
 
 import Input from "../../Shared/Input";
 // import Error from "../Shared/Error"
-import axios from "axios";
-import baseURL from "../../constants/baseurl";
 import Toast from "react-native-toast-message";
 import { Ionicons } from "@expo/vector-icons";
-import mime from "mime";
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from "expo-image-picker"
 import { colors, spacing } from "../../Shared/theme";
+import AuthGlobal from '../../Context/Store/AuthGlobal';
+import { registerWithFirebaseEmail } from '../../Context/Actions/Auth.actions';
 const countries = require("../../data/countries.json");
 
 const Register = (props) => {
@@ -25,6 +24,7 @@ const Register = (props) => {
     const [mainImage, setMainImage] = useState('');
     const [saving, setSaving] = useState(false);
     const navigation = useNavigation()
+    const context = useContext(AuthGlobal)
 
 
 
@@ -46,8 +46,7 @@ const Register = (props) => {
         }
     };
 
-    const register = () => {
-        console.log(`${baseURL}users/register`)
+    const register = async () => {
         if (email === "" || name === "" || phone === "" || password === "" || country === "") {
             Toast.show({
                 topOffset: 60,
@@ -58,63 +57,41 @@ const Register = (props) => {
             return;
         }
 
-        if (!image) {
-            Toast.show({
-                topOffset: 60,
-                type: "error",
-                text1: "Profile photo required",
-                text2: "Take or upload a photo before registering.",
-            });
-            return;
-        }
-
-        let formData = new FormData();
-        const newImageUri = "file:///" + image.split("file:/").join("");
-
-
-        formData.append("name", name);
-        formData.append("email", email);
-        formData.append("password", password);
-        formData.append("phone", phone);
-        formData.append("country", country);
-        formData.append("isAdmin", false);
-        formData.append("image", {
-            uri: newImageUri,
-            type: mime.getType(newImageUri),
-            name: newImageUri.split("/").pop()
-        });
-        const config = {
-            headers: {
-                "Content-Type": "multipart/form-data",
-
-            }
-        }
         setSaving(true);
-        axios
-            .post(`${baseURL}users/register`, formData, config)
-            .then((res) => {
-                if (res.status === 200) {
-                    Toast.show({
-                        topOffset: 60,
-                        type: "success",
-                        text1: "Registration Succeeded",
-                        text2: "Please Login into your account",
-                    });
-                    setTimeout(() => {
-                        navigation.navigate("Login");
-                    }, 500);
-                }
+        registerWithFirebaseEmail(
+            {
+                email,
+                password,
+                name,
+                phone,
+                country,
+            },
+            context.dispatch
+        )
+            .then(() => {
+                Toast.show({
+                    topOffset: 60,
+                    type: "success",
+                    text1: "Registration Succeeded",
+                    text2: "Your account is ready.",
+                });
+                navigation.navigate('Zone Runners', {
+                    screen: 'Home',
+                    params: {
+                        screen: 'Main',
+                        params: {
+                            openSearch: false,
+                            headerSearchText: '',
+                        },
+                    },
+                });
             })
             .catch((error) => {
-                // console.log(`${baseURL}users/register`)
                 Toast.show({
-                    position: 'bottom',
-                    bottomOffset: 20,
                     type: "error",
-                    text1: "Something went wrong",
-                    text2: "Please try again",
+                    text1: "Registration failed",
+                    text2: error?.message || "Please try again",
                 });
-                console.log(error)
             })
             .finally(() => setSaving(false))
     }

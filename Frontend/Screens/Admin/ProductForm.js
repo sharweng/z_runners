@@ -517,6 +517,7 @@ const ProductForm = (props) => {
                     label="Categories"
                     selectionColor="red"
                     style={styles.categoryPicker}
+                    itemStyle={styles.categoryPickerItem}
                     minWidth="100%"
                     placeholder="Select your Category"
                     selectedValue={category || ''}
@@ -527,14 +528,15 @@ const ProductForm = (props) => {
                             setError(null);
                         }
                     }} >
-                    <Picker.Item label="Select Category" value="" />
+                    <Picker.Item label="Select Category" value="" color="#000000" />
                     {categories.map((c, index) => {
                         const categoryId = getEntityId(c);
                         return (
                             <Picker.Item
                                 key={categoryId}
                                 label={c.name}
-                                value={categoryId} />
+                                value={categoryId}
+                                color="#000000" />
                         )
                     })}
 
@@ -545,6 +547,7 @@ const ProductForm = (props) => {
                 <EasyButton
                     large
                     primary
+                    style={styles.fullWidthButton}
                     onPress={() => addProduct()}
                 ><Text style={styles.buttonText}>{isEditing ? 'Update' : 'Confirm'}</Text>
                 </EasyButton>
@@ -563,7 +566,11 @@ const styles = StyleSheet.create({
         width: "100%",
         marginBottom: 100,
         marginTop: 20,
-        alignItems: "center"
+        alignItems: "stretch"
+    },
+    fullWidthButton: {
+        width: '100%',
+        marginHorizontal: 0,
     },
     buttonText: {
         color: "white"
@@ -597,6 +604,11 @@ const styles = StyleSheet.create({
     categoryPicker: {
         width: '100%',
         height: 56,
+        color: '#000000',
+        backgroundColor: colors.surface,
+    },
+    categoryPickerItem: {
+        color: '#000000',
     },
     galleryRow: {
         paddingVertical: spacing.sm,
